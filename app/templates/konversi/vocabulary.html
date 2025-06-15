@@ -1,0 +1,251 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-info text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0 fw-bold">
+                                <i class="fas fa-book me-2"></i>
+                                TF-IDF Vocabulary
+                            </h3>
+                            <p class="mb-0 opacity-75">Daftar kata-kata fitur dalam model TF-IDF</p>
+                        </div>
+                        <div class="text-end">
+                            <a href="{{ url_for('konversi.index') }}" class="btn btn-light">
+                                <i class="fas fa-arrow-left me-2"></i>Kembali
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'info' if category == 'info' else 'warning' }} alert-dismissible fade show border-0 shadow-sm">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'danger' else 'check-circle' if category == 'success' else 'info-circle' if category == 'info' else 'exclamation-circle' }} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <h4 class="mb-1 text-primary">{{ vocab_data.total }}</h4>
+                                    <small class="text-muted">Total Vocabulary</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <form method="GET" action="{{ url_for('konversi.vocabulary') }}">
+                                <div class="input-group">
+                                    <input type="text" name="search" class="form-control" 
+                                           placeholder="Cari kata..." value="{{ search if search }}">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                    {% if search %}
+                                    <a href="{{ url_for('konversi.vocabulary') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {% if vocab_data.items %}
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-gradient-light border-0">
+                            <h5 class="mb-0 text-dark">
+                                <i class="fas fa-list me-2 text-info"></i>
+                                Daftar Vocabulary
+                                <span class="badge bg-info text-white">{{ vocab_data.total }} kata</span>
+                                {% if search %}
+                                <span class="badge bg-warning text-dark">Filter: "{{ search }}"</span>
+                                {% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th class="fw-semibold text-center" style="width: 60px;">
+                                                <i class="fas fa-hashtag"></i>
+                                            </th>
+                                            <th class="fw-semibold">
+                                                <i class="fas fa-font me-1"></i>Term
+                                            </th>
+                                            <th class="fw-semibold text-center" style="width: 120px;">
+                                                <i class="fas fa-sort-numeric-up me-1"></i>Feature Index
+                                            </th>
+                                            <th class="fw-semibold text-center" style="width: 150px;">
+                                                <i class="fas fa-file-alt me-1"></i>Document Frequency
+                                            </th>
+                                            <th class="fw-semibold text-center" style="width: 120px;">
+                                                <i class="fas fa-calculator me-1"></i>IDF Score
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for vocab in vocab_data.items %}
+                                        <tr>
+                                            <td class="text-center">
+                                                <small class="text-muted fw-bold">{{ loop.index + (vocab_data.page - 1) * vocab_data.per_page }}</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary rounded-pill px-3 py-2" style="font-size: 0.9em;">
+                                                    {{ vocab.term }}
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-secondary">
+                                                    {{ vocab.feature_index }}
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-info text-white">
+                                                    {{ vocab.document_frequency }}
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-success">
+                                                    {{ "%.4f"|format(vocab.idf_score) }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {% if vocab_data.pages > 1 %}
+                            <div class="p-3 border-top bg-light">
+                                <nav>
+                                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                                        {% if vocab_data.has_prev %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('konversi.vocabulary', page=vocab_data.prev_num, search=search) }}">
+                                                    <i class="fas fa-chevron-left"></i>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                        
+                                        {% for page_num in vocab_data.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                            {% if page_num %}
+                                                {% if page_num != vocab_data.page %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('konversi.vocabulary', page=page_num, search=search) }}">{{ page_num }}</a>
+                                                    </li>
+                                                {% else %}
+                                                    <li class="page-item active">
+                                                        <span class="page-link">{{ page_num }}</span>
+                                                    </li>
+                                                {% endif %}
+                                            {% else %}
+                                                <li class="page-item disabled">
+                                                    <span class="page-link">...</span>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if vocab_data.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('konversi.vocabulary', page=vocab_data.next_num, search=search) }}">
+                                                    <i class="fas fa-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                                
+                                <div class="text-center mt-2">
+                                    <small class="text-muted">
+                                        Halaman {{ vocab_data.page }} dari {{ vocab_data.pages }} 
+                                        ({{ vocab_data.total }} total vocabulary)
+                                    </small>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-book fa-4x text-muted"></i>
+                        </div>
+                        {% if search %}
+                        <h5 class="text-muted mb-3">Tidak ditemukan vocabulary</h5>
+                        <p class="text-muted mb-4">
+                            Tidak ada vocabulary yang cocok dengan pencarian "{{ search }}".<br>
+                            Coba gunakan kata kunci yang berbeda.
+                        </p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="{{ url_for('konversi.vocabulary') }}" class="btn btn-primary">
+                                <i class="fas fa-list me-2"></i>Lihat Semua Vocabulary
+                            </a>
+                        </div>
+                        {% else %}
+                        <h5 class="text-muted mb-3">Belum ada vocabulary</h5>
+                        <p class="text-muted mb-4">
+                            Vocabulary akan muncul setelah melakukan konversi TF-IDF.<br>
+                            Lakukan konversi terlebih dahulu untuk melihat daftar kata-kata fitur.
+                        </p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="{{ url_for('konversi.index') }}" class="btn btn-primary">
+                                <i class="fas fa-exchange-alt me-2"></i>Konversi TF-IDF
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-light {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(45deg, #17a2b8, #6f42c1);
+}
+
+.table-dark th {
+    background: linear-gradient(45deg, #343a40, #495057);
+    border: none;
+}
+
+.badge {
+    font-weight: 500;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.input-group .form-control:focus {
+    border-color: #17a2b8;
+    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+}
+</style>
+{% endblock %}

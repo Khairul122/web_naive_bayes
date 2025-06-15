@@ -1,0 +1,273 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <!-- Welcome Card -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+              <img
+                src="{{ url_for('static', filename='logo.png') }}"
+                alt="Logo"
+                width="80"
+                class="mb-2"
+              />
+            </div>
+            <div class="col-md-10">
+              <h3 class="text-primary fw-bold mb-2">Sistem Analisis Sentiment NBC</h3>
+              <p class="text-muted mb-2">Klasifikasi Sentiment dengan Naïve Bayes Classifier</p>
+              <p class="fs-6 text-dark mb-0">
+                Selamat datang, <strong class="text-success">{{ username }}</strong>! 
+                Kelola analisis sentiment dengan mudah dan efisien.
+                {% if stats.model_trained %}
+                <br><small class="text-muted">
+                  Status: Model NBC 
+                  {% if stats.model_tested %}
+                  <span class="text-success">sudah diuji</span> dengan akurasi {{ stats.nbc_accuracy }}%
+                  {% else %}
+                  <span class="text-warning">sudah dilatih</span>, siap untuk testing
+                  {% endif %}
+                </small>
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card bg-primary text-white border-0 shadow-sm">
+        <div class="card-body text-center">
+          <i class="fas fa-twitter fa-2x mb-2"></i>
+          <h4 class="fw-bold">{{ stats.total_tweets if stats else 0 }}</h4>
+          <p class="mb-0">Total Tweets</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card bg-warning text-white border-0 shadow-sm">
+        <div class="card-body text-center">
+          <i class="fas fa-heart fa-2x mb-2"></i>
+          <h4 class="fw-bold">{{ stats.sentiment_count if stats else 0 }}</h4>
+          <p class="mb-0">Sentiment Analysis</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card bg-success text-white border-0 shadow-sm">
+        <div class="card-body text-center">
+          <i class="fas fa-exchange-alt fa-2x mb-2"></i>
+          <h4 class="fw-bold">{{ stats.tfidf_count if stats else 0 }}</h4>
+          <p class="mb-0">TF-IDF Features</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card bg-danger text-white border-0 shadow-sm">
+        <div class="card-body text-center">
+          <i class="fas fa-brain fa-2x mb-2"></i>
+          <h4 class="fw-bold">{{ stats.nbc_accuracy if stats else 0 }}%</h4>
+          <p class="mb-0">NBC Akurasi</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sentiment Distribution (if available) -->
+  {% if stats.sentiment_count > 0 %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="mb-0 text-dark">
+            <i class="fas fa-chart-pie me-2 text-info"></i>Distribusi Sentiment
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 text-center">
+              <div class="mb-2">
+                <span class="badge bg-success fs-6">{{ stats.positif_count }}</span>
+                <h6 class="text-success">Positif</h6>
+                {% if stats.sentiment_count > 0 %}
+                <small class="text-muted">{{ "%.1f"|format(stats.positif_count / stats.sentiment_count * 100) }}%</small>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="mb-2">
+                <span class="badge bg-danger fs-6">{{ stats.negatif_count }}</span>
+                <h6 class="text-danger">Negatif</h6>
+                {% if stats.sentiment_count > 0 %}
+                <small class="text-muted">{{ "%.1f"|format(stats.negatif_count / stats.sentiment_count * 100) }}%</small>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="mb-2">
+                <span class="badge bg-secondary fs-6">{{ stats.netral_count }}</span>
+                <h6 class="text-secondary">Netral</h6>
+                {% if stats.sentiment_count > 0 %}
+                <small class="text-muted">{{ "%.1f"|format(stats.netral_count / stats.sentiment_count * 100) }}%</small>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="mb-0 text-dark">
+            <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <a href="/scrapping" class="btn btn-outline-primary btn-lg w-100 h-100">
+                <i class="fas fa-twitter fa-2x mb-2 d-block"></i>
+                <strong>Scraping Tweet</strong>
+                <small class="d-block text-muted">Ambil data dari Twitter</small>
+              </a>
+            </div>
+            <div class="col-md-3 mb-3">
+              <a href="/sentimen" class="btn btn-outline-warning btn-lg w-100 h-100">
+                <i class="fas fa-heart fa-2x mb-2 d-block"></i>
+                <strong>Sentiment Analysis</strong>
+                <small class="d-block text-muted">Analisis sentiment otomatis</small>
+              </a>
+            </div>
+            <div class="col-md-3 mb-3">
+              <a href="/konversi" class="btn btn-outline-success btn-lg w-100 h-100">
+                <i class="fas fa-exchange-alt fa-2x mb-2 d-block"></i>
+                <strong>TF-IDF Conversion</strong>
+                <small class="d-block text-muted">Konversi ke fitur numerik</small>
+              </a>
+            </div>
+            <div class="col-md-3 mb-3">
+              <a href="/nbc" class="btn btn-outline-danger btn-lg w-100 h-100">
+                <i class="fas fa-brain fa-2x mb-2 d-block"></i>
+                <strong>NBC Classification</strong>
+                <small class="d-block text-muted">Machine learning model</small>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workflow Process -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="mb-0 text-dark">
+            <i class="fas fa-sitemap me-2 text-info"></i>Alur Kerja Sistem
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 text-center mb-3">
+              <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                <span class="fw-bold fs-4">1</span>
+              </div>
+              <h6 class="mt-2 text-primary">Scraping</h6>
+              <small class="text-muted">Ambil data tweet dari Twitter</small>
+            </div>
+            <div class="col-md-3 text-center mb-3">
+              <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                <span class="fw-bold fs-4">2</span>
+              </div>
+              <h6 class="mt-2 text-warning">Sentiment</h6>
+              <small class="text-muted">Analisis sentiment positif/negatif/netral</small>
+            </div>
+            <div class="col-md-3 text-center mb-3">
+              <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                <span class="fw-bold fs-4">3</span>
+              </div>
+              <h6 class="mt-2 text-success">TF-IDF</h6>
+              <small class="text-muted">Konversi teks ke fitur numerik</small>
+            </div>
+            <div class="col-md-3 text-center mb-3">
+              <div class="bg-danger text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                <span class="fw-bold fs-4">4</span>
+              </div>
+              <h6 class="mt-2 text-danger">NBC</h6>
+              <small class="text-muted">Klasifikasi dengan Naïve Bayes</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  {% if recent_activity %}
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="mb-0 text-dark">
+            <i class="fas fa-clock me-2 text-secondary"></i>Aktivitas Terbaru
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="timeline">
+            {% for activity in recent_activity %}
+            <div class="d-flex mb-3">
+              <div class="flex-shrink-0">
+                <div class="bg-{{ activity.color or 'secondary' }} text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                  <i class="fas fa-{{ activity.icon or 'circle' }}"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1 ms-3">
+                <h6 class="mb-1">{{ activity.title }}</h6>
+                <p class="text-muted mb-1">{{ activity.description }}</p>
+                <small class="text-muted">{{ activity.time }}</small>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+.btn-lg {
+  padding: 1.5rem 1rem;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.timeline .d-flex:last-child {
+  margin-bottom: 0 !important;
+}
+</style>
+{% endblock %}

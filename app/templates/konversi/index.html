@@ -1,0 +1,387 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-success text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0 fw-bold">
+                                <i class="fas fa-exchange-alt me-2"></i>
+                                TF-IDF Conversion
+                            </h3>
+                            <p class="mb-0 opacity-75">Konversi text sentiment ke fitur TF-IDF</p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-dark text-white fs-6">
+                                <i class="fas fa-percentage me-1"></i>{{ stats.conversion_rate }}% Converted
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'info' if category == 'info' else 'warning' }} alert-dismissible fade show border-0 shadow-sm">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'danger' else 'check-circle' if category == 'success' else 'info-circle' if category == 'info' else 'exclamation-circle' }} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="row">
+                        <div class="col-lg-4 col-md-5 mb-4">
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-gradient-info text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-chart-bar me-2"></i>
+                                        Statistik Konversi
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center mb-3">
+                                        <div class="col-6">
+                                            <div class="border-end">
+                                                <h4 class="mb-0 text-primary">{{ stats.total_sentiments }}</h4>
+                                                <small class="text-muted">Total Sentiment</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <h4 class="mb-0 text-success">{{ stats.converted_count }}</h4>
+                                            <small class="text-muted">Terkonversi</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress mb-3" style="height: 10px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ stats.conversion_rate }}%"></div>
+                                    </div>
+                                    
+                                    <div class="row text-center mb-3">
+                                        <div class="col-6">
+                                            <h5 class="mb-0 text-warning">{{ stats.pending_count }}</h5>
+                                            <small class="text-muted">Pending</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <h5 class="mb-0 text-info">{{ stats.total_features }}</h5>
+                                            <small class="text-muted">Total Fitur</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="text-center">
+                                        <span class="badge bg-secondary">{{ stats.vocabulary_count }} Vocabulary</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-gradient-primary text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-cogs me-2"></i>
+                                        Konversi TF-IDF
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if stats.pending_count > 0 %}
+                                    <form method="POST" action="{{ url_for('konversi.convert_tfidf') }}" 
+                                          onsubmit="return confirm('Mulai konversi TF-IDF untuk {{ stats.pending_count }} sentiment?')" id="convertForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">Max Features</label>
+                                            <input type="number" name="max_features" class="form-control" value="1000" min="100" max="10000">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Min DF</label>
+                                            <input type="number" name="min_df" class="form-control" value="0.01" step="0.01" min="0.01" max="1">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Max DF</label>
+                                            <input type="number" name="max_df" class="form-control" value="0.95" step="0.01" min="0.01" max="1">
+                                        </div>
+                                        <button type="submit" class="btn btn-success w-100 mb-3" id="convertBtn">
+                                            <i class="fas fa-exchange-alt me-2"></i>
+                                            Konversi {{ stats.pending_count }} Data
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <div class="alert alert-success text-center py-2 mb-3">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        Semua data sudah dikonversi
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="d-grid gap-2">
+                                        {% if stats.converted_count > 0 %}
+                                        <a href="{{ url_for('konversi.vocabulary') }}" class="btn btn-outline-info">
+                                            <i class="fas fa-book me-2"></i>Lihat Vocabulary
+                                        </a>
+                                        
+                                        <a href="{{ url_for('konversi.export') }}" class="btn btn-outline-success">
+                                            <i class="fas fa-download me-2"></i>Export Features
+                                        </a>
+                                        
+                                        <a href="{{ url_for('konversi.export_matrix') }}" class="btn btn-outline-primary">
+                                            <i class="fas fa-table me-2"></i>Export Matrix
+                                        </a>
+                                        
+                                        <form method="POST" action="{{ url_for('konversi.reset') }}" 
+                                              onsubmit="return confirm('Yakin ingin menghapus semua data konversi?')" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-danger w-100">
+                                                <i class="fas fa-trash me-2"></i>Reset Konversi
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-gradient-dark text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>Info TF-IDF
+                                    </h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="mb-2">
+                                        <small class="text-primary fw-bold">TF-IDF:</small>
+                                        <p class="small text-muted mb-1">Term Frequency - Inverse Document Frequency</p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-success fw-bold">Max Features:</small>
+                                        <p class="small text-muted mb-1">Jumlah maksimal fitur yang digunakan</p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-warning fw-bold">Min/Max DF:</small>
+                                        <p class="small text-muted mb-1">Frekuensi dokumen minimum dan maksimum</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-8 col-md-7">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-gradient-light border-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0 text-dark">
+                                            <i class="fas fa-table me-2 text-success"></i>
+                                            Data Konversi TF-IDF
+                                            {% if conversion_data.items %}
+                                                <span class="badge bg-success text-white">{{ conversion_data.total }} data</span>
+                                            {% endif %}
+                                        </h5>
+                                    </div>
+                                </div>
+                                <div class="card-body p-0">
+                                    {% if conversion_data.items %}
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="fw-semibold text-center" style="width: 40px;">
+                                                        <i class="fas fa-hashtag"></i>
+                                                    </th>
+                                                    <th class="fw-semibold" style="width: 100px;">
+                                                        <i class="fas fa-user me-1"></i>Username
+                                                    </th>
+                                                    <th class="fw-semibold">
+                                                        <i class="fas fa-comment me-1"></i>Text
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 100px;">
+                                                        <i class="fas fa-heart me-1"></i>Label
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 80px;">
+                                                        <i class="fas fa-cogs me-1"></i>Fitur
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 100px;">
+                                                        <i class="fas fa-clock me-1"></i>Tanggal
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for conversion, sentiment in conversion_data.items %}
+                                                <tr class="{% if sentiment.sentiment_label == 'positif' %}table-success-light{% elif sentiment.sentiment_label == 'negatif' %}table-danger-light{% else %}table-secondary-light{% endif %}">
+                                                    <td class="text-center">
+                                                        <small class="text-muted fw-bold">{{ loop.index + (conversion_data.page - 1) * conversion_data.per_page }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-primary rounded-pill" style="font-size: 0.7em;">
+                                                            {{ sentiment.username[:10] if sentiment.username else 'Unknown' }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div style="max-width: 300px;">
+                                                            <p class="mb-1 text-truncate" style="font-size: 0.85em;">
+                                                                {{ conversion.text_input[:80] }}{% if conversion.text_input|length > 80 %}...{% endif %}
+                                                            </p>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        {% if sentiment.sentiment_label == 'positif' %}
+                                                        <span class="badge bg-success rounded-pill">
+                                                            <i class="fas fa-smile"></i> Positif
+                                                        </span>
+                                                        {% elif sentiment.sentiment_label == 'negatif' %}
+                                                        <span class="badge bg-danger rounded-pill">
+                                                            <i class="fas fa-frown"></i> Negatif
+                                                        </span>
+                                                        {% else %}
+                                                        <span class="badge bg-secondary rounded-pill">
+                                                            <i class="fas fa-meh"></i> Netral
+                                                        </span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-info text-white">
+                                                            {{ conversion.total_features }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <small class="text-muted">
+                                                            {{ conversion.created_at.strftime('%d/%m/%Y') }}
+                                                        </small>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {% if conversion_data.pages > 1 %}
+                                    <div class="p-3 border-top bg-light">
+                                        <nav>
+                                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                                {% if conversion_data.has_prev %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('konversi.index', page=conversion_data.prev_num) }}">
+                                                            <i class="fas fa-chevron-left"></i>
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                                
+                                                {% for page_num in conversion_data.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                                    {% if page_num %}
+                                                        {% if page_num != conversion_data.page %}
+                                                            <li class="page-item">
+                                                                <a class="page-link" href="{{ url_for('konversi.index', page=page_num) }}">{{ page_num }}</a>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="page-item active">
+                                                                <span class="page-link">{{ page_num }}</span>
+                                                            </li>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <li class="page-item disabled">
+                                                            <span class="page-link">...</span>
+                                                        </li>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                
+                                                {% if conversion_data.has_next %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('konversi.index', page=conversion_data.next_num) }}">
+                                                            <i class="fas fa-chevron-right"></i>
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                            </ul>
+                                        </nav>
+                                        
+                                        <div class="text-center mt-2">
+                                            <small class="text-muted">
+                                                Halaman {{ conversion_data.page }} dari {{ conversion_data.pages }} 
+                                                ({{ conversion_data.total }} total data)
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    {% else %}
+                                    <div class="text-center py-5">
+                                        <div class="mb-4">
+                                            <i class="fas fa-exchange-alt fa-4x text-muted"></i>
+                                        </div>
+                                        <h5 class="text-muted mb-3">Belum ada data konversi</h5>
+                                        <p class="text-muted mb-4">
+                                            {% if stats.total_sentiments > 0 %}
+                                            Ada {{ stats.pending_count }} sentiment yang siap dikonversi.<br>
+                                            Klik tombol "Konversi" untuk memulai konversi TF-IDF.
+                                            {% else %}
+                                            Lakukan sentiment analysis terlebih dahulu sebelum konversi TF-IDF.
+                                            {% endif %}
+                                        </p>
+                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                            {% if stats.total_sentiments > 0 %}
+                                            <form method="POST" action="{{ url_for('konversi.convert_tfidf') }}" class="d-inline">
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="fas fa-exchange-alt me-2"></i>Konversi TF-IDF
+                                                </button>
+                                            </form>
+                                            {% else %}
+                                            <a href="{{ url_for('sentimen.index') }}" class="btn btn-primary">
+                                                <i class="fas fa-heart me-2"></i>Sentiment Analysis
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('convertForm')?.addEventListener('submit', function() {
+    const btn = document.getElementById('convertBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sedang konversi...';
+    btn.disabled = true;
+});
+
+if (document.querySelector('.alert-info')) {
+    setTimeout(() => {
+        location.reload();
+    }, 3000);
+}
+</script>
+
+<style>
+.bg-gradient-light {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(45deg, #17a2b8, #6f42c1);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #6610f2);
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(45deg, #343a40, #6c757d);
+}
+
+.table-success-light {
+    --bs-table-bg: rgba(40, 167, 69, 0.1);
+}
+
+.table-danger-light {
+    --bs-table-bg: rgba(220, 53, 69, 0.1);
+}
+
+.table-secondary-light {
+    --bs-table-bg: rgba(108, 117, 125, 0.1);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,420 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-success text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0 fw-bold">
+                                <i class="fas fa-cogs me-2"></i>
+                                Text Preprocessing
+                            </h3>
+                            <p class="mb-0 opacity-75">Pembersihan dan normalisasi teks tweet untuk analisis</p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-light text-dark fs-6">
+                                <i class="fas fa-chart-line me-1"></i>{{ stats.processing_rate }}% Processed
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'info' if category == 'info' else 'warning' }} alert-dismissible fade show border-0 shadow-sm">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'danger' else 'check-circle' if category == 'success' else 'info-circle' if category == 'info' else 'exclamation-circle' }} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="row">
+                        <!-- Left Sidebar: Stats & Controls -->
+                        <div class="col-lg-4 col-md-5 mb-4">
+                            <!-- Statistics Card -->
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-gradient-info text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-chart-bar me-2"></i>
+                                        Statistik Preprocessing
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center mb-3">
+                                        <div class="col-6">
+                                            <div class="border-end">
+                                                <h4 class="mb-0 text-primary">{{ stats.total_tweets }}</h4>
+                                                <small class="text-muted">Total Tweets</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <h4 class="mb-0 text-success">{{ stats.processed_count }}</h4>
+                                            <small class="text-muted">Diproses</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress mb-3" style="height: 10px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ stats.processing_rate }}%"></div>
+                                    </div>
+                                    
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <h5 class="mb-0 text-warning">{{ stats.pending_count }}</h5>
+                                            <small class="text-muted">Pending</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <h5 class="mb-0 text-info">{{ stats.processing_rate }}%</h5>
+                                            <small class="text-muted">Progress</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Process Controls -->
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-gradient-primary text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-play me-2"></i>
+                                        Kontrol Preprocessing
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if stats.pending_count > 0 %}
+                                    <form method="POST" action="{{ url_for('preprocessing.process_texts') }}" 
+                                          onsubmit="return confirm('Mulai proses preprocessing untuk {{ stats.pending_count }} tweet?')" id="processForm">
+                                        <button type="submit" class="btn btn-success w-100 mb-3" id="processBtn">
+                                            <i class="fas fa-cogs me-2"></i>
+                                            Proses {{ stats.pending_count }} Tweet
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <div class="alert alert-success text-center py-2 mb-3">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        Semua tweet sudah diproses
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ url_for('preprocessing.settings') }}" class="btn btn-outline-primary">
+                                            <i class="fas fa-cog me-2"></i>Pengaturan
+                                        </a>
+                                        
+                                        {% if stats.processed_count > 0 %}
+                                        <a href="{{ url_for('preprocessing.export') }}" class="btn btn-outline-success">
+                                            <i class="fas fa-download me-2"></i>Export CSV
+                                        </a>
+                                        
+                                        <form method="POST" action="{{ url_for('preprocessing.reset') }}" 
+                                              onsubmit="return confirm('Yakin ingin menghapus semua data preprocessing?')" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-danger w-100">
+                                                <i class="fas fa-trash me-2"></i>Reset Data
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preprocessing Steps Info -->
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-gradient-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-list-check me-2"></i>Tahapan Preprocessing
+                                    </h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <small class="d-block mb-1">
+                                                <span class="badge bg-primary me-2">1</span>
+                                                <i class="fas fa-broom text-primary me-1"></i>Cleansing
+                                            </small>
+                                            <small class="d-block mb-1">
+                                                <span class="badge bg-info me-2">2</span>
+                                                <i class="fas fa-font text-info me-1"></i>Case Folding
+                                            </small>
+                                            <small class="d-block mb-1">
+                                                <span class="badge bg-success me-2">3</span>
+                                                <i class="fas fa-cut text-success me-1"></i>Tokenizing
+                                            </small>
+                                            <small class="d-block mb-1">
+                                                <span class="badge bg-warning me-2">4</span>
+                                                <i class="fas fa-filter text-warning me-1"></i>Stopword Removal
+                                            </small>
+                                            <small class="d-block mb-1">
+                                                <span class="badge bg-danger me-2">5</span>
+                                                <i class="fas fa-spell-check text-danger me-1"></i>Normalization
+                                            </small>
+                                            <small class="d-block">
+                                                <span class="badge bg-dark me-2">6</span>
+                                                <i class="fas fa-scissors text-dark me-1"></i>Stemming (ECS)
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Side: Data Table -->
+                        <div class="col-lg-8 col-md-7">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-gradient-light border-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0 text-dark">
+                                            <i class="fas fa-table me-2 text-success"></i>
+                                            Hasil Preprocessing
+                                            {% if preprocessing_data.items %}
+                                                <span class="badge bg-success">{{ preprocessing_data.total }} data</span>
+                                            {% endif %}
+                                        </h5>
+                                    </div>
+                                </div>
+                                <div class="card-body p-0">
+                                    {% if preprocessing_data.items %}
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="fw-semibold text-center" style="width: 40px;">
+                                                        <i class="fas fa-hashtag"></i>
+                                                    </th>
+                                                    <th class="fw-semibold" style="width: 100px;">
+                                                        <i class="fas fa-user me-1"></i>User
+                                                    </th>
+                                                    <th class="fw-semibold">
+                                                        <i class="fas fa-file-text me-1"></i>Original Text
+                                                    </th>
+                                                    <th class="fw-semibold">
+                                                        <i class="fas fa-magic me-1"></i>Processed Text
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 100px;">
+                                                        <i class="fas fa-chart-bar me-1"></i>Stats
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 80px;">
+                                                        <i class="fas fa-check me-1"></i>Status
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for preprocessing, tweet in preprocessing_data.items %}
+                                                <tr class="{% if preprocessing.processing_status == 'completed' %}table-success-light{% elif preprocessing.processing_status == 'failed' %}table-danger-light{% endif %}">
+                                                    <td class="text-center">
+                                                        <small class="text-muted fw-bold">{{ loop.index + (preprocessing_data.page - 1) * preprocessing_data.per_page }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-primary rounded-pill" style="font-size: 0.7em;">
+                                                            {{ tweet.username[:10] if tweet.username else 'Unknown' }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div style="max-width: 250px;">
+                                                            <p class="mb-1 text-truncate" style="font-size: 0.85em;">
+                                                                {{ preprocessing.original_text[:80] }}{% if preprocessing.original_text|length > 80 %}...{% endif %}
+                                                            </p>
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-word me-1"></i>{{ preprocessing.word_count_before }} kata
+                                                            </small>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div style="max-width: 250px;">
+                                                            {% if preprocessing.final_text %}
+                                                            <p class="mb-1 text-truncate" style="font-size: 0.85em;">
+                                                                {{ preprocessing.final_text[:80] }}{% if preprocessing.final_text|length > 80 %}...{% endif %}
+                                                            </p>
+                                                            <small class="text-success">
+                                                                <i class="fas fa-word me-1"></i>{{ preprocessing.word_count_after }} kata
+                                                            </small>
+                                                            {% else %}
+                                                            <small class="text-muted">Belum diproses</small>
+                                                            {% endif %}
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        {% if preprocessing.processing_status == 'completed' %}
+                                                        <div class="d-flex flex-column gap-1">
+                                                            <small class="text-danger">
+                                                                <i class="fas fa-link"></i> {{ preprocessing.removed_urls }}
+                                                            </small>
+                                                            <small class="text-warning">
+                                                                <i class="fas fa-at"></i> {{ preprocessing.removed_mentions }}
+                                                            </small>
+                                                            <small class="text-info">
+                                                                <i class="fas fa-ban"></i> {{ preprocessing.removed_stopwords }}
+                                                            </small>
+                                                            <small class="text-success">
+                                                                <i class="fas fa-edit"></i> {{ preprocessing.normalized_words }}
+                                                            </small>
+                                                        </div>
+                                                        {% else %}
+                                                        <small class="text-muted">-</small>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-center">
+                                                        {% if preprocessing.processing_status == 'completed' %}
+                                                        <span class="badge bg-success rounded-pill">
+                                                            <i class="fas fa-check"></i> Done
+                                                        </span>
+                                                        {% elif preprocessing.processing_status == 'failed' %}
+                                                        <span class="badge bg-danger rounded-pill">
+                                                            <i class="fas fa-times"></i> Failed
+                                                        </span>
+                                                        {% elif preprocessing.processing_status == 'processing' %}
+                                                        <span class="badge bg-warning rounded-pill">
+                                                            <i class="fas fa-spinner fa-spin"></i> Process
+                                                        </span>
+                                                        {% else %}
+                                                        <span class="badge bg-secondary rounded-pill">
+                                                            <i class="fas fa-clock"></i> Pending
+                                                        </span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Pagination -->
+                                    {% if preprocessing_data.pages > 1 %}
+                                    <div class="p-3 border-top bg-light">
+                                        <nav>
+                                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                                {% if preprocessing_data.has_prev %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('preprocessing.index', page=preprocessing_data.prev_num) }}">
+                                                            <i class="fas fa-chevron-left"></i>
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                                
+                                                {% for page_num in preprocessing_data.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                                    {% if page_num %}
+                                                        {% if page_num != preprocessing_data.page %}
+                                                            <li class="page-item">
+                                                                <a class="page-link" href="{{ url_for('preprocessing.index', page=page_num) }}">{{ page_num }}</a>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="page-item active">
+                                                                <span class="page-link">{{ page_num }}</span>
+                                                            </li>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <li class="page-item disabled">
+                                                            <span class="page-link">...</span>
+                                                        </li>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                
+                                                {% if preprocessing_data.has_next %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('preprocessing.index', page=preprocessing_data.next_num) }}">
+                                                            <i class="fas fa-chevron-right"></i>
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                            </ul>
+                                        </nav>
+                                        
+                                        <div class="text-center mt-2">
+                                            <small class="text-muted">
+                                                Halaman {{ preprocessing_data.page }} dari {{ preprocessing_data.pages }} 
+                                                ({{ preprocessing_data.total }} total data)
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    {% else %}
+                                    <!-- Empty State -->
+                                    <div class="text-center py-5">
+                                        <div class="mb-4">
+                                            <i class="fas fa-cogs fa-4x text-muted"></i>
+                                        </div>
+                                        <h5 class="text-muted mb-3">Belum ada data preprocessing</h5>
+                                        <p class="text-muted mb-4">
+                                            {% if stats.total_tweets > 0 %}
+                                            Ada {{ stats.total_tweets }} tweet yang siap diproses.<br>
+                                            Klik tombol "Proses Tweet" untuk memulai text preprocessing.
+                                            {% else %}
+                                            Lakukan scraping tweet terlebih dahulu sebelum preprocessing.
+                                            {% endif %}
+                                        </p>
+                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                            {% if stats.total_tweets > 0 %}
+                                            <form method="POST" action="{{ url_for('preprocessing.process_texts') }}" class="d-inline">
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="fas fa-cogs me-2"></i>Proses Tweet
+                                                </button>
+                                            </form>
+                                            {% else %}
+                                            <a href="{{ url_for('scrapping.index') }}" class="btn btn-primary">
+                                                <i class="fas fa-twitter me-2"></i>Scraping Tweet
+                                            </a>
+                                            {% endif %}
+                                            <a href="{{ url_for('preprocessing.settings') }}" class="btn btn-outline-secondary">
+                                                <i class="fas fa-cog me-2"></i>Pengaturan
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('processForm')?.addEventListener('submit', function() {
+    const btn = document.getElementById('processBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sedang memproses...';
+    btn.disabled = true;
+});
+
+if (document.querySelector('.badge:contains("Process")')) {
+    setTimeout(() => {
+        location.reload();
+    }, 5000);
+}
+</script>
+
+<style>
+.bg-gradient-light {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(45deg, #17a2b8, #6f42c1);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #6610f2);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+}
+
+.table-success-light {
+    --bs-table-bg: rgba(40, 167, 69, 0.1);
+}
+
+.table-danger-light {
+    --bs-table-bg: rgba(220, 53, 69, 0.1);
+}
+</style>
+{% endblock %}

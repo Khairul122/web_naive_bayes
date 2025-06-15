@@ -1,0 +1,261 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-success text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0 fw-bold">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Hasil Testing NBC
+                            </h3>
+                            <p class="mb-0 opacity-75">Hasil prediksi model Naïve Bayes Classifier</p>
+                        </div>
+                        <div class="text-end">
+                            <a href="{{ url_for('nbc.index') }}" class="btn btn-light">
+                                <i class="fas fa-arrow-left me-2"></i>Kembali
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% if model_data %}
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card border-0 shadow-sm text-center">
+                                <div class="card-body">
+                                    <h4 class="mb-1 text-success">{{ "%.2f"|format(model_data.accuracy * 100) }}%</h4>
+                                    <small class="text-muted">Akurasi Model</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-0 shadow-sm text-center">
+                                <div class="card-body">
+                                    <h4 class="mb-1 text-primary">{{ model_data.n_features }}</h4>
+                                    <small class="text-muted">Total Fitur</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-0 shadow-sm text-center">
+                                <div class="card-body">
+                                    <h4 class="mb-1 text-info">{{ model_data.n_classes }}</h4>
+                                    <small class="text-muted">Jumlah Kelas</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-0 shadow-sm text-center">
+                                <div class="card-body">
+                                    <h4 class="mb-1 text-warning">{{ model_data.testing_samples }}</h4>
+                                    <small class="text-muted">Data Testing</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if testing_results.items %}
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-gradient-light border-0">
+                            <h5 class="mb-0 text-dark">
+                                <i class="fas fa-table me-2 text-success"></i>
+                                Hasil Prediksi
+                                <span class="badge bg-success text-white">{{ testing_results.total }} data</span>
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th class="fw-semibold text-center" style="width: 40px;">
+                                                <i class="fas fa-hashtag"></i>
+                                            </th>
+                                            <th class="fw-semibold text-center" style="width: 100px;">
+                                                <i class="fas fa-link me-1"></i>ID
+                                            </th>
+                                            <th class="fw-semibold text-center" style="width: 120px;">
+                                                <i class="fas fa-heart me-1"></i>Label Asli
+                                            </th>
+                                            <th class="fw-semibold text-center" style="width: 120px;">
+                                                <i class="fas fa-robot me-1"></i>Prediksi
+                                            </th>
+                                            <th class="fw-semibold text-center" style="width: 100px;">
+                                                <i class="fas fa-check me-1"></i>Status
+                                            </th>
+                                            <th class="fw-semibold text-center" style="width: 100px;">
+                                                <i class="fas fa-clock me-1"></i>Tanggal
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for result in testing_results.items %}
+                                        <tr class="{% if result.is_correct %}table-success-light{% else %}table-danger-light{% endif %}">
+                                            <td class="text-center">
+                                                <small class="text-muted fw-bold">{{ loop.index + (testing_results.page - 1) * testing_results.per_page }}</small>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-info rounded-pill">
+                                                    {{ result.conversion_id }}
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                {% if result.true_label == 'positif' %}
+                                                <span class="badge bg-success rounded-pill">
+                                                    <i class="fas fa-smile"></i> Positif
+                                                </span>
+                                                {% elif result.true_label == 'negatif' %}
+                                                <span class="badge bg-danger rounded-pill">
+                                                    <i class="fas fa-frown"></i> Negatif
+                                                </span>
+                                                {% else %}
+                                                <span class="badge bg-secondary rounded-pill">
+                                                    <i class="fas fa-meh"></i> Netral
+                                                </span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {% if result.predicted_label == 'positif' %}
+                                                <span class="badge bg-success rounded-pill">
+                                                    <i class="fas fa-smile"></i> Positif
+                                                </span>
+                                                {% elif result.predicted_label == 'negatif' %}
+                                                <span class="badge bg-danger rounded-pill">
+                                                    <i class="fas fa-frown"></i> Negatif
+                                                </span>
+                                                {% else %}
+                                                <span class="badge bg-secondary rounded-pill">
+                                                    <i class="fas fa-meh"></i> Netral
+                                                </span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {% if result.is_correct %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> Benar
+                                                </span>
+                                                {% else %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times"></i> Salah
+                                                </span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                <small class="text-muted">
+                                                    {{ result.created_at.strftime('%d/%m/%Y') }}
+                                                </small>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {% if testing_results.pages > 1 %}
+                            <div class="p-3 border-top bg-light">
+                                <nav>
+                                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                                        {% if testing_results.has_prev %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('nbc.results', page=testing_results.prev_num) }}">
+                                                    <i class="fas fa-chevron-left"></i>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                        
+                                        {% for page_num in testing_results.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                            {% if page_num %}
+                                                {% if page_num != testing_results.page %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('nbc.results', page=page_num) }}">{{ page_num }}</a>
+                                                    </li>
+                                                {% else %}
+                                                    <li class="page-item active">
+                                                        <span class="page-link">{{ page_num }}</span>
+                                                    </li>
+                                                {% endif %}
+                                            {% else %}
+                                                <li class="page-item disabled">
+                                                    <span class="page-link">...</span>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if testing_results.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('nbc.results', page=testing_results.next_num) }}">
+                                                    <i class="fas fa-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                                
+                                <div class="text-center mt-2">
+                                    <small class="text-muted">
+                                        Halaman {{ testing_results.page }} dari {{ testing_results.pages }} 
+                                        ({{ testing_results.total }} total hasil)
+                                    </small>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-chart-bar fa-4x text-muted"></i>
+                        </div>
+                        <h5 class="text-muted mb-3">Belum ada hasil testing</h5>
+                        <p class="text-muted mb-4">
+                            Lakukan testing model terlebih dahulu untuk melihat hasil prediksi.
+                        </p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="{{ url_for('nbc.index') }}" class="btn btn-primary">
+                                <i class="fas fa-brain me-2"></i>Kembali ke NBC
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-light {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.table-dark th {
+    background: linear-gradient(45deg, #343a40, #495057);
+    border: none;
+}
+
+.table-success-light {
+    --bs-table-bg: rgba(40, 167, 69, 0.1);
+}
+
+.table-danger-light {
+    --bs-table-bg: rgba(220, 53, 69, 0.1);
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

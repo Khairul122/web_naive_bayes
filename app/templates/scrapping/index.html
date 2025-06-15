@@ -1,0 +1,515 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0 fw-bold">
+                                <i class="fas fa-twitter me-2"></i>
+                                Twitter Scrapping Enhanced
+                            </h3>
+                            <p class="mb-0 opacity-75">Kumpulkan semua jenis konten: Tweet, Reply, Retweet, Quote, Media</p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-light text-dark fs-6">
+                                <i class="fas fa-database me-1"></i>Total: {{ total_tweets }} tweets
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'info' if category == 'info' else 'warning' }} alert-dismissible fade show border-0 shadow-sm">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'danger' else 'check-circle' if category == 'success' else 'info-circle' if category == 'info' else 'exclamation-circle' }} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="row">
+                        <!-- Left Sidebar: Controls & Stats -->
+                        <div class="col-lg-4 col-md-5 mb-4">
+                            <!-- Scraping Form -->
+                            <div class="card border-0 shadow-sm h-auto mb-3">
+                                <div class="card-header bg-gradient-light border-0">
+                                    <h5 class="mb-0 text-dark">
+                                        <i class="fas fa-cog me-2 text-primary"></i>
+                                        Pengaturan Scraping
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <form method="POST" action="{{ url_for('scrapping.scrape') }}" id="scrapingForm">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">
+                                                <i class="fas fa-search me-1"></i>Search Keyword
+                                            </label>
+                                            <textarea class="form-control border-2" name="search_keyword" rows="3" 
+                                                   placeholder='"Prabowo Subianto" OR "Kabinet Prabowo" OR "Presiden Prabowo"' required></textarea>
+                                            <small class="text-muted">
+                                                Contoh: "Prabowo", "Gibran", atau gunakan OR untuk multiple keyword
+                                            </small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">
+                                                <i class="fas fa-bullseye me-1"></i>Target Jumlah
+                                            </label>
+                                            <select class="form-control border-2" name="limit">
+                                                <option value="100">100 postingan</option>
+                                                <option value="500">500 postingan</option>
+                                                <option value="1000" selected>1000 postingan</option>
+                                                <option value="2000">2000 postingan</option>
+                                                <option value="5000">5000 postingan</option>
+                                            </select>
+                                            <small class="text-muted">Termasuk semua jenis konten</small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">
+                                                <i class="fas fa-filter me-1"></i>Jenis Konten
+                                            </label>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="include_replies" value="1" checked>
+                                                        <label class="form-check-label">
+                                                            <i class="fas fa-reply me-1 text-info"></i>Replies
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="include_retweets" value="1" checked>
+                                                        <label class="form-check-label">
+                                                            <i class="fas fa-retweet me-1 text-success"></i>Retweets
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" checked disabled>
+                                                        <label class="form-check-label">
+                                                            <i class="fas fa-quote-left me-1 text-warning"></i>Quotes
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" checked disabled>
+                                                        <label class="form-check-label">
+                                                            <i class="fas fa-image me-1 text-danger"></i>Media
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">Quotes & Media selalu disertakan untuk hasil maksimal</small>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <label class="form-label fw-semibold">
+                                                <i class="fas fa-key me-1"></i>Auth Token
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control border-2" name="auth_token" 
+                                                       value="9f51ed906269b1876f7d3d1cb52ecb6685ac0f05" required id="authToken">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                                    <i class="fas fa-eye" id="toggleIcon"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted">Token autentikasi Twitter API</small>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mb-2" id="scrapingBtn">
+                                            <i class="fas fa-rocket me-2"></i>Mulai Scraping Comprehensive
+                                        </button>
+                                    </form>
+                                    
+                                    <div class="text-center">
+                                        <small class="text-muted d-block mb-2">atau</small>
+                                        <form method="POST" action="{{ url_for('scrapping.scrape_demo') }}">
+                                            <input type="hidden" name="search_keyword" value="demo keyword">
+                                            <input type="hidden" name="limit" value="50">
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
+                                                <i class="fas fa-flask me-2"></i>Demo Scraping (50 tweets)
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tips Card -->
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-gradient-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-lightbulb me-2"></i>Tips Scraping Optimal
+                                    </h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Keyword spesifik menghasilkan data lebih relevan<br>
+                                        <i class="fas fa-check-circle text-success me-1"></i>System otomatis mengumpulkan: Original + Replies + Retweets + Quotes + Media<br>
+                                        <i class="fas fa-check-circle text-success me-1"></i>Date range: 20 Okt 2024 - 15 Jun 2025<br>
+                                        <i class="fas fa-clock text-info me-1"></i>Estimasi: 2-10 menit untuk 1000 tweets
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Content Breakdown Stats -->
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-gradient-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-chart-pie me-2"></i>Breakdown Konten
+                                    </h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row text-center mb-2">
+                                        <div class="col-6">
+                                            <div class="border-end">
+                                                <h6 class="mb-0 text-primary">{{ total_tweets }}</h6>
+                                                <small class="text-muted">Total Data</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <h6 class="mb-0 text-success">
+                                                {% if tweets.items %}{{ tweets.total }}{% else %}0{% endif %}
+                                            </h6>
+                                            <small class="text-muted">Halaman Ini</small>
+                                        </div>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="row text-center">
+                                        <div class="col-3">
+                                            <small class="text-muted d-block">Original</small>
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-comment"></i>
+                                            </span>
+                                        </div>
+                                        <div class="col-3">
+                                            <small class="text-muted d-block">Replies</small>
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-reply"></i>
+                                            </span>
+                                        </div>
+                                        <div class="col-3">
+                                            <small class="text-muted d-block">Retweets</small>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-retweet"></i>
+                                            </span>
+                                        </div>
+                                        <div class="col-3">
+                                            <small class="text-muted d-block">Media</small>
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-image"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Side: Data Table -->
+                        <div class="col-lg-8 col-md-7">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-gradient-light border-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0 text-dark">
+                                            <i class="fas fa-table me-2 text-primary"></i>
+                                            Data Comprehensive
+                                            {% if tweets.items %}
+                                                <span class="badge bg-primary">{{ tweets.total }} data</span>
+                                            {% endif %}
+                                        </h5>
+                                        <div>
+                                            {% if total_tweets > 0 %}
+                                            <a href="{{ url_for('scrapping.export') }}" class="btn btn-success btn-sm me-2">
+                                                <i class="fas fa-download me-1"></i>Export CSV
+                                            </a>
+                                            <form method="POST" action="{{ url_for('scrapping.reset') }}" class="d-inline" 
+                                                  onsubmit="return confirm('Yakin ingin menghapus semua data?')">
+                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                    <i class="fas fa-trash me-1"></i>Reset All
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body p-0">
+                                    {% if tweets.items %}
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="fw-semibold text-center" style="width: 40px;">
+                                                        <i class="fas fa-hashtag"></i>
+                                                    </th>
+                                                    <th class="fw-semibold" style="width: 100px;">
+                                                        <i class="fas fa-user me-1"></i>User
+                                                    </th>
+                                                    <th class="fw-semibold">
+                                                        <i class="fas fa-comment me-1"></i>Content
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 80px;">
+                                                        <i class="fas fa-tags me-1"></i>Type
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 70px;">
+                                                        <i class="fas fa-heart me-1 text-danger"></i>Likes
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 70px;">
+                                                        <i class="fas fa-retweet me-1 text-success"></i>RTs
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 100px;">
+                                                        <i class="fas fa-calendar me-1"></i>Date
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for tweet in tweets.items %}
+                                                <tr class="{% if tweet.has_media %}table-warning{% elif tweet.is_reply %}table-info{% elif tweet.is_retweet %}table-success{% endif %}">
+                                                    <td class="text-center">
+                                                        <small class="text-muted fw-bold">{{ loop.index + (tweets.page - 1) * tweets.per_page }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="d-flex flex-column">
+                                                            <span class="badge bg-primary rounded-pill mb-1" style="font-size: 0.7em;">
+                                                                {{ tweet.username[:10] if tweet.username else 'Unknown' }}
+                                                            </span>
+                                                            {% if tweet.in_reply_to_screen_name %}
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-arrow-right"></i> @{{ tweet.in_reply_to_screen_name[:8] }}
+                                                            </small>
+                                                            {% endif %}
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div style="max-width: 300px;">
+                                                            <p class="mb-1 text-truncate" style="font-size: 0.9em;">
+                                                                {{ tweet.full_text[:85] }}{% if tweet.full_text|length > 85 %}...{% endif %}
+                                                            </p>
+                                                            <div class="d-flex gap-1 align-items-center">
+                                                                {% if tweet.tweet_url %}
+                                                                <a href="{{ tweet.tweet_url }}" target="_blank" class="btn btn-outline-primary btn-xs">
+                                                                    <i class="fas fa-external-link-alt"></i>
+                                                                </a>
+                                                                {% endif %}
+                                                                {% if tweet.has_media %}
+                                                                <span class="badge bg-warning text-dark" style="font-size: 0.6em;">
+                                                                    <i class="fas fa-{{ 'video' if tweet.media_type == 'video' else 'image' }}"></i> 
+                                                                    {{ tweet.media_type|title if tweet.media_type else 'Media' }}
+                                                                </span>
+                                                                {% endif %}
+                                                                {% if tweet.lang and tweet.lang != 'id' %}
+                                                                <span class="badge bg-secondary" style="font-size: 0.6em;">{{ tweet.lang|upper }}</span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        {% if tweet.is_retweet %}
+                                                        <span class="badge bg-success rounded-pill">
+                                                            <i class="fas fa-retweet"></i> RT
+                                                        </span>
+                                                        {% elif tweet.is_reply %}
+                                                        <span class="badge bg-info rounded-pill">
+                                                            <i class="fas fa-reply"></i> Reply
+                                                        </span>
+                                                        {% elif tweet.is_quote %}
+                                                        <span class="badge bg-warning rounded-pill">
+                                                            <i class="fas fa-quote-left"></i> Quote
+                                                        </span>
+                                                        {% else %}
+                                                        <span class="badge bg-primary rounded-pill">
+                                                            <i class="fas fa-comment"></i> Tweet
+                                                        </span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-light text-dark">
+                                                            {% if tweet.favorite_count > 1000 %}
+                                                                {{ "%.1f"|format(tweet.favorite_count/1000) }}k
+                                                            {% else %}
+                                                                {{ tweet.favorite_count }}
+                                                            {% endif %}
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-light text-dark">
+                                                            {% if tweet.retweet_count > 1000 %}
+                                                                {{ "%.1f"|format(tweet.retweet_count/1000) }}k
+                                                            {% else %}
+                                                                {{ tweet.retweet_count }}
+                                                            {% endif %}
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <small class="text-muted">
+                                                            {{ tweet.created_at.strftime('%d/%m %H:%M') }}
+                                                        </small>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Pagination -->
+                                    {% if tweets.pages > 1 %}
+                                    <div class="p-3 border-top bg-light">
+                                        <nav>
+                                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                                {% if tweets.has_prev %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('scrapping.index', page=tweets.prev_num) }}">
+                                                            <i class="fas fa-chevron-left"></i>
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                                
+                                                {% for page_num in tweets.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                                    {% if page_num %}
+                                                        {% if page_num != tweets.page %}
+                                                            <li class="page-item">
+                                                                <a class="page-link" href="{{ url_for('scrapping.index', page=page_num) }}">{{ page_num }}</a>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="page-item active">
+                                                                <span class="page-link">{{ page_num }}</span>
+                                                            </li>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <li class="page-item disabled">
+                                                            <span class="page-link">...</span>
+                                                        </li>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                
+                                                {% if tweets.has_next %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('scrapping.index', page=tweets.next_num) }}">
+                                                            <i class="fas fa-chevron-right"></i>
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                            </ul>
+                                        </nav>
+                                        
+                                        <div class="text-center mt-2">
+                                            <small class="text-muted">
+                                                Halaman {{ tweets.page }} dari {{ tweets.pages }} 
+                                                ({{ tweets.total }} total data)
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    {% else %}
+                                    <!-- Empty State -->
+                                    <div class="text-center py-5">
+                                        <div class="mb-4">
+                                            <i class="fas fa-database fa-4x text-muted"></i>
+                                        </div>
+                                        <h5 class="text-muted mb-3">Belum ada data tweets</h5>
+                                        <p class="text-muted mb-4">
+                                            Mulai scraping untuk mengumpulkan <strong>semua jenis konten</strong>:<br>
+                                            Tweet Original, Replies, Retweets, Quote Tweets, dan Media Posts
+                                        </p>
+                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                            <button type="button" class="btn btn-primary" onclick="document.getElementById('scrapingForm').scrollIntoView({behavior: 'smooth'})">
+                                                <i class="fas fa-rocket me-2"></i>Mulai Scraping
+                                            </button>
+                                            <form method="POST" action="{{ url_for('scrapping.scrape_demo') }}" class="d-inline">
+                                                <input type="hidden" name="search_keyword" value="demo">
+                                                <input type="hidden" name="limit" value="50">
+                                                <button type="submit" class="btn btn-outline-secondary">
+                                                    <i class="fas fa-flask me-2"></i>Coba Demo
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle password visibility
+function togglePassword() {
+    const authToken = document.getElementById('authToken');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (authToken.type === 'password') {
+        authToken.type = 'text';
+        toggleIcon.className = 'fas fa-eye-slash';
+    } else {
+        authToken.type = 'password';
+        toggleIcon.className = 'fas fa-eye';
+    }
+}
+
+// Loading state for scraping form
+document.getElementById('scrapingForm').addEventListener('submit', function() {
+    const btn = document.getElementById('scrapingBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sedang Scraping Comprehensive...';
+    btn.disabled = true;
+    
+    // Show progress message
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-info alert-dismissible fade show border-0 shadow-sm mt-3';
+    alert.innerHTML = `
+        <i class="fas fa-info-circle me-2"></i>
+        Proses scraping dimulai... Sistem akan mengumpulkan Tweet, Reply, Retweet, Quote, dan Media. 
+        Harap tunggu beberapa menit.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.card-body').insertBefore(alert, document.querySelector('.row'));
+});
+
+// Auto-refresh stats every 30 seconds if scraping is active
+if (document.querySelector('.alert-info')) {
+    setTimeout(() => {
+        location.reload();
+    }, 30000);
+}
+</script>
+
+<style>
+.bg-gradient-light {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(45deg, #ffc107, #ffeb3b);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(45deg, #17a2b8, #20c997);
+}
+
+.table-warning {
+    --bs-table-bg: rgba(255, 193, 7, 0.1);
+}
+
+.table-info {
+    --bs-table-bg: rgba(23, 162, 184, 0.1);
+}
+
+.table-success {
+    --bs-table-bg: rgba(40, 167, 69, 0.1);
+}
+
+.btn-xs {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.7rem;
+    border-radius: 0.2rem;
+}
+</style>
+{% endblock %}

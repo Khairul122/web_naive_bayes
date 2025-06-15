@@ -1,0 +1,499 @@
+{% extends 'layout.html' %}
+
+{% block title %}NBC - Naïve Bayes Classifier{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0 fw-bold">
+                                <i class="fas fa-brain me-2"></i>
+                                Naïve Bayes Classifier
+                            </h3>
+                            <p class="mb-0 opacity-75">Klasifikasi sentiment dengan algoritma NBC</p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-dark text-white fs-6">
+                                <i class="fas fa-percentage me-1"></i>{{ stats.accuracy }}% Akurasi
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'info' if category == 'info' else 'warning' }} alert-dismissible fade show border-0 shadow-sm">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'danger' else 'check-circle' if category == 'success' else 'info-circle' if category == 'info' else 'exclamation-circle' }} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="row">
+                        <div class="col-lg-4 col-md-5 mb-4">
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-gradient-info text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-chart-line me-2"></i>
+                                        Statistik Model
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center mb-3">
+                                        <div class="col-6">
+                                            <div class="border-end">
+                                                <h4 class="mb-0 text-primary">{{ stats.total_tfidf }}</h4>
+                                                <small class="text-muted">Total Data</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <h4 class="mb-0 text-success">{{ stats.training_count }}</h4>
+                                            <small class="text-muted">Training</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress mb-3" style="height: 10px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ stats.training_rate }}%"></div>
+                                    </div>
+                                    
+                                    <div class="row text-center mb-3">
+                                        <div class="col-6">
+                                            <h5 class="mb-0 text-warning">{{ stats.testing_count }}</h5>
+                                            <small class="text-muted">Testing</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <h5 class="mb-0 text-info">{{ stats.model_count }}</h5>
+                                            <small class="text-muted">Model</small>
+                                        </div>
+                                    </div>
+
+                                    {% if latest_model %}
+                                    <div class="text-center">
+                                        <span class="badge bg-success">Akurasi: {{ "%.2f"|format(stats.accuracy) }}%</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-gradient-warning text-dark">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-cut me-2"></i>
+                                        Split Data
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if stats.total_tfidf > 0 %}
+                                    <form method="POST" action="{{ url_for('nbc.split_data') }}" 
+                                          onsubmit="return confirm('Split data untuk training/testing?')" id="splitForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">Test Size (%)</label>
+                                            <select name="test_size" class="form-select">
+                                                <option value="0.2">20% Testing</option>
+                                                <option value="0.3" selected>30% Testing</option>
+                                                <option value="0.4">40% Testing</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Random State</label>
+                                            <input type="number" name="random_state" class="form-control" value="42">
+                                        </div>
+                                        <button type="submit" class="btn btn-warning w-100 mb-3" id="splitBtn">
+                                            <i class="fas fa-cut me-2"></i>
+                                            Split {{ stats.total_tfidf }} Data
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <div class="alert alert-warning text-center py-2 mb-3">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Belum ada data TF-IDF
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-gradient-success text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-graduation-cap me-2"></i>
+                                        Training Model
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if stats.training_count > 0 %}
+                                    <form method="POST" action="{{ url_for('nbc.train_model') }}" 
+                                          onsubmit="return confirm('Mulai training model NBC?')" id="trainForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">Alpha (Smoothing)</label>
+                                            <input type="number" name="alpha" class="form-control" value="1.0" step="0.1" min="0.1">
+                                        </div>
+                                        <button type="submit" class="btn btn-success w-100 mb-3" id="trainBtn">
+                                            <i class="fas fa-graduation-cap me-2"></i>
+                                            Train Model
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <div class="alert alert-info text-center py-2 mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Split data terlebih dahulu
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-gradient-danger text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-vial me-2"></i>
+                                        Testing Model
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if stats.model_count > 0 and stats.testing_count > 0 %}
+                                    <form method="POST" action="{{ url_for('nbc.test_model') }}" 
+                                          onsubmit="return confirm('Mulai testing model NBC?')" id="testForm">
+                                        <button type="submit" class="btn btn-danger w-100 mb-3" id="testBtn">
+                                            <i class="fas fa-vial me-2"></i>
+                                            Test Model
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <div class="alert alert-info text-center py-2 mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Training model terlebih dahulu
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-gradient-dark text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-tools me-2"></i>
+                                        Aksi
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        {% if latest_model and latest_model.tested_at %}
+                                        <a href="{{ url_for('nbc.results') }}" class="btn btn-outline-primary">
+                                            <i class="fas fa-chart-bar me-2"></i>Lihat Hasil
+                                        </a>
+                                        {% endif %}
+                                        
+                                        {% if stats.training_count > 0 or stats.testing_count > 0 or stats.model_count > 0 %}
+                                        <form method="POST" action="{{ url_for('nbc.reset') }}" 
+                                              onsubmit="return confirm('Yakin ingin menghapus semua data NBC?')" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-danger w-100">
+                                                <i class="fas fa-trash me-2"></i>Reset NBC
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-8 col-md-7">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-gradient-light border-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0 text-dark">
+                                            <i class="fas fa-table me-2 text-primary"></i>
+                                            Data Training NBC
+                                            {% if training_data.items %}
+                                                <span class="badge bg-primary text-white">{{ training_data.total }} data</span>
+                                            {% endif %}
+                                        </h5>
+                                    </div>
+                                </div>
+                                <div class="card-body p-0">
+                                    {% if training_data.items %}
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="fw-semibold text-center" style="width: 40px;">
+                                                        <i class="fas fa-hashtag"></i>
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 100px;">
+                                                        <i class="fas fa-link me-1"></i>ID Konversi
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 100px;">
+                                                        <i class="fas fa-heart me-1"></i>Label
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 120px;">
+                                                        <i class="fas fa-percentage me-1"></i>Test Size
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 100px;">
+                                                        <i class="fas fa-dice me-1"></i>Random
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 100px;">
+                                                        <i class="fas fa-clock me-1"></i>Tanggal
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for training in training_data.items %}
+                                                <tr class="{% if training.label == 'positif' %}table-success-light{% elif training.label == 'negatif' %}table-danger-light{% else %}table-secondary-light{% endif %}">
+                                                    <td class="text-center">
+                                                        <small class="text-muted fw-bold">{{ loop.index + (training_data.page - 1) * training_data.per_page }}</small>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-info rounded-pill">
+                                                            {{ training.conversion_id }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        {% if training.label == 'positif' %}
+                                                        <span class="badge bg-success rounded-pill">
+                                                            <i class="fas fa-smile"></i> Positif
+                                                        </span>
+                                                        {% elif training.label == 'negatif' %}
+                                                        <span class="badge bg-danger rounded-pill">
+                                                            <i class="fas fa-frown"></i> Negatif
+                                                        </span>
+                                                        {% else %}
+                                                        <span class="badge bg-secondary rounded-pill">
+                                                            <i class="fas fa-meh"></i> Netral
+                                                        </span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-warning text-dark">
+                                                            {{ "%.0f"|format(training.test_size * 100) }}%
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-secondary">
+                                                            {{ training.random_state }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <small class="text-muted">
+                                                            {{ training.created_at.strftime('%d/%m/%Y') }}
+                                                        </small>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {% if training_data.pages > 1 %}
+                                    <div class="p-3 border-top bg-light">
+                                        <nav>
+                                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                                {% if training_data.has_prev %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('nbc.index', page=training_data.prev_num) }}">
+                                                            <i class="fas fa-chevron-left"></i>
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                                
+                                                {% for page_num in training_data.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                                    {% if page_num %}
+                                                        {% if page_num != training_data.page %}
+                                                            <li class="page-item">
+                                                                <a class="page-link" href="{{ url_for('nbc.index', page=page_num) }}">{{ page_num }}</a>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="page-item active">
+                                                                <span class="page-link">{{ page_num }}</span>
+                                                            </li>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <li class="page-item disabled">
+                                                            <span class="page-link">...</span>
+                                                        </li>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                
+                                                {% if training_data.has_next %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('nbc.index', page=training_data.next_num) }}">
+                                                            <i class="fas fa-chevron-right"></i>
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                            </ul>
+                                        </nav>
+                                        
+                                        <div class="text-center mt-2">
+                                            <small class="text-muted">
+                                                Halaman {{ training_data.page }} dari {{ training_data.pages }} 
+                                                ({{ training_data.total }} total data)
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    {% else %}
+                                    <div class="text-center py-5">
+                                        <div class="mb-4">
+                                            <i class="fas fa-brain fa-4x text-muted"></i>
+                                        </div>
+                                        <h5 class="text-muted mb-3">Belum ada data training</h5>
+                                        <p class="text-muted mb-4">
+                                            {% if stats.total_tfidf > 0 %}
+                                            Ada {{ stats.total_tfidf }} data TF-IDF yang siap di-split.<br>
+                                            Lakukan split data untuk membagi training dan testing.
+                                            {% else %}
+                                            Lakukan konversi TF-IDF terlebih dahulu sebelum NBC.
+                                            {% endif %}
+                                        </p>
+                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                            {% if stats.total_tfidf > 0 %}
+                                            <form method="POST" action="{{ url_for('nbc.split_data') }}" class="d-inline">
+                                                <input type="hidden" name="test_size" value="0.3">
+                                                <input type="hidden" name="random_state" value="42">
+                                                <button type="submit" class="btn btn-warning">
+                                                    <i class="fas fa-cut me-2"></i>Split Data
+                                                </button>
+                                            </form>
+                                            {% else %}
+                                            <a href="{{ url_for('konversi.index') }}" class="btn btn-primary">
+                                                <i class="fas fa-exchange-alt me-2"></i>Konversi TF-IDF
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if latest_model %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-gradient-secondary text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Informasi Model Terakhir
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <strong>Nama Model:</strong><br>
+                                            <span class="text-muted">{{ latest_model.model_name }}</span>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <strong>Alpha:</strong><br>
+                                            <span class="badge bg-info">{{ latest_model.alpha }}</span>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <strong>Fitur:</strong><br>
+                                            <span class="badge bg-primary">{{ latest_model.n_features }}</span>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <strong>Kelas:</strong><br>
+                                            <span class="badge bg-secondary">{{ latest_model.n_classes }}</span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>Akurasi:</strong><br>
+                                            {% if latest_model.accuracy > 0 %}
+                                            <span class="badge bg-success fs-6">{{ "%.2f"|format(latest_model.accuracy * 100) }}%</span>
+                                            {% else %}
+                                            <span class="badge bg-warning text-dark">Belum diuji</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('splitForm')?.addEventListener('submit', function() {
+    const btn = document.getElementById('splitBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sedang split...';
+    btn.disabled = true;
+});
+
+document.getElementById('trainForm')?.addEventListener('submit', function() {
+    const btn = document.getElementById('trainBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sedang training...';
+    btn.disabled = true;
+});
+
+document.getElementById('testForm')?.addEventListener('submit', function() {
+    const btn = document.getElementById('testBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sedang testing...';
+    btn.disabled = true;
+});
+
+if (document.querySelector('.alert-info')) {
+    setTimeout(() => {
+        location.reload();
+    }, 3000);
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.bg-gradient-light {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #6610f2);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(45deg, #17a2b8, #6f42c1);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(45deg, #dc3545, #e83e8c);
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(45deg, #343a40, #6c757d);
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(45deg, #6c757d, #495057);
+}
+
+.table-success-light {
+    --bs-table-bg: rgba(40, 167, 69, 0.1);
+}
+
+.table-danger-light {
+    --bs-table-bg: rgba(220, 53, 69, 0.1);
+}
+
+.table-secondary-light {
+    --bs-table-bg: rgba(108, 117, 125, 0.1);
+}
+</style>
+{% endblock %}

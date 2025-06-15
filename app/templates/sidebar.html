@@ -1,0 +1,47 @@
+<nav class="sidebar sidebar-offcanvas" id="sidebar">
+  <ul class="nav">
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('dashboard.index') }}">
+        <i class="mdi mdi-view-dashboard menu-icon"></i>
+        <span class="menu-title">Dashboard</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('scrapping.index') }}">
+        <i class="mdi mdi-database-search menu-icon"></i>
+        <span class="menu-title">Scrapping</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('preprocessing.index') }}">
+        <i class="mdi mdi-filter-variant menu-icon"></i>
+        <span class="menu-title">Preprocessing</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('sentimen.index') }}">
+        <i class="mdi mdi-emoticon-happy-outline menu-icon"></i>
+        <span class="menu-title">Sentimen</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('konversi.index') }}">
+        <i class="mdi mdi-sync menu-icon"></i>
+        <span class="menu-title">Konversi</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('nbc.index') }}">
+        <i class="mdi mdi-chart-bar menu-icon"></i>
+        <span class="menu-title">Naive Bayes Classifier</span>
+      </a>
+    </li>
+    <li class="nav-item mt-4">
+      <a class="nav-link text-danger" href="{{ url_for('auth.logout') }}">
+        <i class="mdi mdi-logout menu-icon"></i>
+        <span class="menu-title">Logout</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+  

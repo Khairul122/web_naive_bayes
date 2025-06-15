@@ -1,0 +1,421 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-warning text-dark py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0 fw-bold">
+                                <i class="fas fa-heart me-2"></i>
+                                Sentiment Analysis
+                            </h3>
+                            <p class="mb-0 opacity-75">Auto labeling sentiment: positif, negatif, netral</p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-dark text-white fs-6">
+                                <i class="fas fa-percentage me-1"></i>{{ stats.labeling_rate }}% Labeled
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'info' if category == 'info' else 'warning' }} alert-dismissible fade show border-0 shadow-sm">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'danger' else 'check-circle' if category == 'success' else 'info-circle' if category == 'info' else 'exclamation-circle' }} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="row">
+                        <!-- Left Sidebar: Stats & Controls -->
+                        <div class="col-lg-4 col-md-5 mb-4">
+                            <!-- Statistics Card -->
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-gradient-info text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-chart-pie me-2"></i>
+                                        Statistik Sentiment
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center mb-3">
+                                        <div class="col-6">
+                                            <div class="border-end">
+                                                <h4 class="mb-0 text-primary">{{ stats.total_tweets }}</h4>
+                                                <small class="text-muted">Total Tweets</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <h4 class="mb-0 text-success">{{ stats.labeled_count }}</h4>
+                                            <small class="text-muted">Dilabeling</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress mb-3" style="height: 10px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ stats.labeling_rate }}%"></div>
+                                    </div>
+                                    
+                                    <div class="row text-center mb-3">
+                                        <div class="col-4">
+                                            <h5 class="mb-0 text-success">{{ stats.positif_count }}</h5>
+                                            <small class="text-muted">Positif</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <h5 class="mb-0 text-danger">{{ stats.negatif_count }}</h5>
+                                            <small class="text-muted">Negatif</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <h5 class="mb-0 text-secondary">{{ stats.netral_count }}</h5>
+                                            <small class="text-muted">Netral</small>
+                                        </div>
+                                    </div>
+
+                                    {% if stats.labeled_count > 0 %}
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <span class="badge bg-success">{{ "%.1f"|format(stats.positif_count / stats.labeled_count * 100) }}%</span>
+                                        </div>
+                                        <div class="col-4">
+                                            <span class="badge bg-danger">{{ "%.1f"|format(stats.negatif_count / stats.labeled_count * 100) }}%</span>
+                                        </div>
+                                        <div class="col-4">
+                                            <span class="badge bg-secondary">{{ "%.1f"|format(stats.netral_count / stats.labeled_count * 100) }}%</span>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Auto Label Controls -->
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-gradient-primary text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-robot me-2"></i>
+                                        Auto Labeling
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if stats.pending_count > 0 %}
+                                    <form method="POST" action="{{ url_for('sentimen.auto_label') }}" 
+                                          onsubmit="return confirm('Mulai auto labeling untuk {{ stats.pending_count }} tweet?')" id="labelForm">
+                                        <button type="submit" class="btn btn-warning w-100 mb-3" id="labelBtn">
+                                            <i class="fas fa-magic me-2"></i>
+                                            Auto Label {{ stats.pending_count }} Tweet
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <div class="alert alert-success text-center py-2 mb-3">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        Semua tweet sudah dilabeling
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="d-grid gap-2">
+                                        {% if stats.labeled_count > 0 %}
+                                        <a href="{{ url_for('sentimen.export') }}" class="btn btn-outline-success">
+                                            <i class="fas fa-download me-2"></i>Export Dataset
+                                        </a>
+                                        
+                                        <form method="POST" action="{{ url_for('sentimen.reset') }}" 
+                                              onsubmit="return confirm('Yakin ingin menghapus semua label sentiment?')" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-danger w-100">
+                                                <i class="fas fa-trash me-2"></i>Reset Labels
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Keyword Info -->
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-gradient-dark text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-key me-2"></i>Keyword Based Labeling
+                                    </h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="mb-2">
+                                        <small class="text-success fw-bold">Positif:</small>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <span class="badge bg-success">bagus</span>
+                                            <span class="badge bg-success">hebat</span>
+                                            <span class="badge bg-success">sukses</span>
+                                            <span class="badge bg-success">senang</span>
+                                            <span class="badge bg-success">setuju</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-danger fw-bold">Negatif:</small>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <span class="badge bg-danger">buruk</span>
+                                            <span class="badge bg-danger">benci</span>
+                                            <span class="badge bg-danger">gagal</span>
+                                            <span class="badge bg-danger">marah</span>
+                                            <span class="badge bg-danger">tolak</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="text-secondary fw-bold">Netral:</small>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <span class="badge bg-secondary">mungkin</span>
+                                            <span class="badge bg-secondary">biasa</span>
+                                            <span class="badge bg-secondary">cukup</span>
+                                            <span class="badge bg-secondary">akan</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Side: Data Table -->
+                        <div class="col-lg-8 col-md-7">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-gradient-light border-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0 text-dark">
+                                            <i class="fas fa-table me-2 text-warning"></i>
+                                            Dataset Sentiment
+                                            {% if sentiment_data.items %}
+                                                <span class="badge bg-warning text-dark">{{ sentiment_data.total }} data</span>
+                                            {% endif %}
+                                        </h5>
+                                    </div>
+                                </div>
+                                <div class="card-body p-0">
+                                    {% if sentiment_data.items %}
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="fw-semibold text-center" style="width: 40px;">
+                                                        <i class="fas fa-hashtag"></i>
+                                                    </th>
+                                                    <th class="fw-semibold" style="width: 100px;">
+                                                        <i class="fas fa-user me-1"></i>Username
+                                                    </th>
+                                                    <th class="fw-semibold">
+                                                        <i class="fas fa-comment me-1"></i>Tweet
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 100px;">
+                                                        <i class="fas fa-heart me-1"></i>Label
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 80px;">
+                                                        <i class="fas fa-percentage me-1"></i>Score
+                                                    </th>
+                                                    <th class="fw-semibold text-center" style="width: 80px;">
+                                                        <i class="fas fa-robot me-1"></i>Method
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for sentiment, tweet in sentiment_data.items %}
+                                                <tr class="{% if sentiment.sentiment_label == 'positif' %}table-success-light{% elif sentiment.sentiment_label == 'negatif' %}table-danger-light{% else %}table-secondary-light{% endif %}">
+                                                    <td class="text-center">
+                                                        <small class="text-muted fw-bold">{{ loop.index + (sentiment_data.page - 1) * sentiment_data.per_page }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-primary rounded-pill" style="font-size: 0.7em;">
+                                                            {{ sentiment.username[:10] if sentiment.username else 'Unknown' }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div style="max-width: 350px;">
+                                                            <p class="mb-1 text-truncate" style="font-size: 0.85em;">
+                                                                {{ sentiment.tweet_text[:100] }}{% if sentiment.tweet_text|length > 100 %}...{% endif %}
+                                                            </p>
+                                                            {% if sentiment.positive_keywords or sentiment.negative_keywords %}
+                                                            <div class="d-flex gap-1 flex-wrap">
+                                                                {% if sentiment.positive_keywords %}
+                                                                <small class="badge bg-success">+{{ sentiment.positive_keywords.split(', ')|length }}</small>
+                                                                {% endif %}
+                                                                {% if sentiment.negative_keywords %}
+                                                                <small class="badge bg-danger">-{{ sentiment.negative_keywords.split(', ')|length }}</small>
+                                                                {% endif %}
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        {% if sentiment.sentiment_label == 'positif' %}
+                                                        <span class="badge bg-success rounded-pill">
+                                                            <i class="fas fa-smile"></i> Positif
+                                                        </span>
+                                                        {% elif sentiment.sentiment_label == 'negatif' %}
+                                                        <span class="badge bg-danger rounded-pill">
+                                                            <i class="fas fa-frown"></i> Negatif
+                                                        </span>
+                                                        {% else %}
+                                                        <span class="badge bg-secondary rounded-pill">
+                                                            <i class="fas fa-meh"></i> Netral
+                                                        </span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-light text-dark">
+                                                            {{ "%.2f"|format(sentiment.confidence_score) }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        {% if sentiment.labeling_method == 'auto' %}
+                                                        <span class="badge bg-warning text-dark rounded-pill">
+                                                            <i class="fas fa-robot"></i> Auto
+                                                        </span>
+                                                        {% else %}
+                                                        <span class="badge bg-info rounded-pill">
+                                                            <i class="fas fa-user"></i> Manual
+                                                        </span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Pagination -->
+                                    {% if sentiment_data.pages > 1 %}
+                                    <div class="p-3 border-top bg-light">
+                                        <nav>
+                                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                                {% if sentiment_data.has_prev %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('sentimen.index', page=sentiment_data.prev_num) }}">
+                                                            <i class="fas fa-chevron-left"></i>
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                                
+                                                {% for page_num in sentiment_data.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                                    {% if page_num %}
+                                                        {% if page_num != sentiment_data.page %}
+                                                            <li class="page-item">
+                                                                <a class="page-link" href="{{ url_for('sentimen.index', page=page_num) }}">{{ page_num }}</a>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="page-item active">
+                                                                <span class="page-link">{{ page_num }}</span>
+                                                            </li>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <li class="page-item disabled">
+                                                            <span class="page-link">...</span>
+                                                        </li>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                
+                                                {% if sentiment_data.has_next %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('sentimen.index', page=sentiment_data.next_num) }}">
+                                                            <i class="fas fa-chevron-right"></i>
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                            </ul>
+                                        </nav>
+                                        
+                                        <div class="text-center mt-2">
+                                            <small class="text-muted">
+                                                Halaman {{ sentiment_data.page }} dari {{ sentiment_data.pages }} 
+                                                ({{ sentiment_data.total }} total data)
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    {% else %}
+                                    <!-- Empty State -->
+                                    <div class="text-center py-5">
+                                        <div class="mb-4">
+                                            <i class="fas fa-heart fa-4x text-muted"></i>
+                                        </div>
+                                        <h5 class="text-muted mb-3">Belum ada data sentiment</h5>
+                                        <p class="text-muted mb-4">
+                                            {% if stats.total_tweets > 0 %}
+                                            Ada {{ stats.total_tweets }} tweet yang siap dilabeling.<br>
+                                            Klik tombol "Auto Label" untuk memulai analisis sentiment.
+                                            {% else %}
+                                            Lakukan scraping tweet terlebih dahulu sebelum sentiment analysis.
+                                            {% endif %}
+                                        </p>
+                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                            {% if stats.total_tweets > 0 %}
+                                            <form method="POST" action="{{ url_for('sentimen.auto_label') }}" class="d-inline">
+                                                <button type="submit" class="btn btn-warning">
+                                                    <i class="fas fa-magic me-2"></i>Auto Label Tweet
+                                                </button>
+                                            </form>
+                                            {% else %}
+                                            <a href="{{ url_for('scrapping.index') }}" class="btn btn-primary">
+                                                <i class="fas fa-twitter me-2"></i>Scraping Tweet
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('labelForm')?.addEventListener('submit', function() {
+    const btn = document.getElementById('labelBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sedang melabeling...';
+    btn.disabled = true;
+});
+
+if (document.querySelector('.alert-info')) {
+    setTimeout(() => {
+        location.reload();
+    }, 3000);
+}
+</script>
+
+<style>
+.bg-gradient-light {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(45deg, #17a2b8, #6f42c1);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #6610f2);
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(45deg, #343a40, #6c757d);
+}
+
+.table-success-light {
+    --bs-table-bg: rgba(40, 167, 69, 0.1);
+}
+
+.table-danger-light {
+    --bs-table-bg: rgba(220, 53, 69, 0.1);
+}
+
+.table-secondary-light {
+    --bs-table-bg: rgba(108, 117, 125, 0.1);
+}
+</style>
+{% endblock %}

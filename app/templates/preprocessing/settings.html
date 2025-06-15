@@ -1,0 +1,463 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0 fw-bold">
+                                <i class="fas fa-cog me-2"></i>
+                                Pengaturan Preprocessing
+                            </h3>
+                            <p class="mb-0 opacity-75">Konfigurasi tahapan dan parameter text preprocessing</p>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('preprocessing.index') }}" class="btn btn-light btn-sm">
+                                <i class="fas fa-arrow-left me-2"></i>Kembali
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'info' if category == 'info' else 'warning' }} alert-dismissible fade show border-0 shadow-sm">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'danger' else 'check-circle' if category == 'success' else 'info-circle' if category == 'info' else 'exclamation-circle' }} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('preprocessing.settings') }}">
+                        <div class="row">
+                            <!-- Left Column: Processing Steps -->
+                            <div class="col-lg-6 col-md-12 mb-4">
+                                <div class="card border-0 shadow-sm h-100">
+                                    <div class="card-header bg-gradient-success text-white">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-list-check me-2"></i>
+                                            Tahapan Preprocessing
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Step 1: Cleansing -->
+                                        <div class="preprocessing-step mb-4">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="badge bg-primary me-2">1</span>
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-broom text-primary me-2"></i>Cleansing
+                                                </h6>
+                                                <div class="form-check form-switch ms-auto">
+                                                    <input class="form-check-input" type="checkbox" name="enable_cleansing" 
+                                                           {{ 'checked' if settings.enable_cleansing else '' }}>
+                                                </div>
+                                            </div>
+                                            <div class="ms-4">
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="remove_urls" 
+                                                                   {{ 'checked' if settings.remove_urls else '' }}>
+                                                            <label class="form-check-label">
+                                                                <i class="fas fa-link text-danger me-1"></i>Hapus URL
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="remove_mentions" 
+                                                                   {{ 'checked' if settings.remove_mentions else '' }}>
+                                                            <label class="form-check-label">
+                                                                <i class="fas fa-at text-info me-1"></i>Hapus Mention
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="remove_hashtags" 
+                                                                   {{ 'checked' if settings.remove_hashtags else '' }}>
+                                                            <label class="form-check-label">
+                                                                <i class="fas fa-hashtag text-primary me-1"></i>Hapus Hashtag
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="remove_numbers" 
+                                                                   {{ 'checked' if settings.remove_numbers else '' }}>
+                                                            <label class="form-check-label">
+                                                                <i class="fas fa-sort-numeric-up text-warning me-1"></i>Hapus Angka
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="remove_punctuation" 
+                                                                   {{ 'checked' if settings.remove_punctuation else '' }}>
+                                                            <label class="form-check-label">
+                                                                <i class="fas fa-exclamation text-danger me-1"></i>Hapus Tanda Baca
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="remove_emoticons" 
+                                                                   {{ 'checked' if settings.remove_emoticons else '' }}>
+                                                            <label class="form-check-label">
+                                                                <i class="fas fa-smile text-success me-1"></i>Hapus Emoticon
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Step 2: Case Folding -->
+                                        <div class="preprocessing-step mb-4">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="badge bg-info me-2">2</span>
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-font text-info me-2"></i>Case Folding
+                                                </h6>
+                                                <div class="form-check form-switch ms-auto">
+                                                    <input class="form-check-input" type="checkbox" name="enable_case_folding" 
+                                                           {{ 'checked' if settings.enable_case_folding else '' }}>
+                                                </div>
+                                            </div>
+                                            <div class="ms-4">
+                                                <small class="text-muted">Mengubah semua huruf menjadi lowercase</small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Step 3: Tokenizing -->
+                                        <div class="preprocessing-step mb-4">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="badge bg-success me-2">3</span>
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-cut text-success me-2"></i>Tokenizing
+                                                </h6>
+                                                <div class="form-check form-switch ms-auto">
+                                                    <input class="form-check-input" type="checkbox" name="enable_tokenizing" 
+                                                           {{ 'checked' if settings.enable_tokenizing else '' }}>
+                                                </div>
+                                            </div>
+                                            <div class="ms-4">
+                                                <small class="text-muted">Memisahkan teks menjadi token (kata-kata)</small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Step 4: Stopword Removal -->
+                                        <div class="preprocessing-step mb-4">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="badge bg-warning me-2">4</span>
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-filter text-warning me-2"></i>Stopword Removal
+                                                </h6>
+                                                <div class="form-check form-switch ms-auto">
+                                                    <input class="form-check-input" type="checkbox" name="enable_stopword_removal" 
+                                                           {{ 'checked' if settings.enable_stopword_removal else '' }}>
+                                                </div>
+                                            </div>
+                                            <div class="ms-4">
+                                                <small class="text-muted">Menghapus kata-kata tidak penting ({{ stopwords|length }} stopwords)</small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Step 5: Normalization -->
+                                        <div class="preprocessing-step mb-4">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="badge bg-danger me-2">5</span>
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-spell-check text-danger me-2"></i>Normalization
+                                                </h6>
+                                                <div class="form-check form-switch ms-auto">
+                                                    <input class="form-check-input" type="checkbox" name="enable_normalization" 
+                                                           {{ 'checked' if settings.enable_normalization else '' }}>
+                                                </div>
+                                            </div>
+                                            <div class="ms-4">
+                                                <small class="text-muted">Mengubah kata slang ke bentuk baku ({{ normalizations|length }} kata)</small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Step 6: Stemming -->
+                                        <div class="preprocessing-step mb-4">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="badge bg-dark me-2">6</span>
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-scissors text-dark me-2"></i>Stemming (ECS)
+                                                </h6>
+                                                <div class="form-check form-switch ms-auto">
+                                                    <input class="form-check-input" type="checkbox" name="enable_stemming" 
+                                                           {{ 'checked' if settings.enable_stemming else '' }}>
+                                                </div>
+                                            </div>
+                                            <div class="ms-4">
+                                                <small class="text-muted">Enhanced Confix Stripping algorithm</small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Word Length Settings -->
+                                        <div class="preprocessing-step">
+                                            <h6 class="mb-3">
+                                                <i class="fas fa-ruler text-secondary me-2"></i>Filter Panjang Kata
+                                            </h6>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <label class="form-label">Minimum Length</label>
+                                                    <input type="number" class="form-control" name="min_word_length" 
+                                                           value="{{ settings.min_word_length }}" min="1" max="10">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Maximum Length</label>
+                                                    <input type="number" class="form-control" name="max_word_length" 
+                                                           value="{{ settings.max_word_length }}" min="10" max="100">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Dictionary Management -->
+                            <div class="col-lg-6 col-md-12 mb-4">
+                                <!-- Stopwords Management -->
+                                <div class="card border-0 shadow-sm mb-3">
+                                    <div class="card-header bg-gradient-warning text-dark">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-ban me-2"></i>
+                                            Stopwords Dictionary ({{ stopwords|length }})
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <small class="text-muted">Kata-kata yang akan dihapus saat filtering:</small>
+                                        </div>
+                                        <div class="stopwords-container" style="max-height: 200px; overflow-y: auto;">
+                                            {% if stopwords %}
+                                                {% for stopword in stopwords %}
+                                                <span class="badge bg-warning text-dark me-1 mb-1">{{ stopword.word }}</span>
+                                                {% endfor %}
+                                            {% else %}
+                                            <div class="text-center py-3">
+                                                <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                                                <p class="text-muted">Menggunakan default stopwords bahasa Indonesia</p>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Normalization Dictionary -->
+                                <div class="card border-0 shadow-sm mb-3">
+                                    <div class="card-header bg-gradient-info text-white">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-language me-2"></i>
+                                            Normalization Dictionary ({{ normalizations|length }})
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <small class="text-muted">Kata slang → kata baku:</small>
+                                        </div>
+                                        <div class="normalization-container" style="max-height: 200px; overflow-y: auto;">
+                                            {% if normalizations %}
+                                                {% for norm in normalizations %}
+                                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                                    <span class="badge bg-danger">{{ norm.slang_word }}</span>
+                                                    <i class="fas fa-arrow-right text-muted"></i>
+                                                    <span class="badge bg-success">{{ norm.standard_word }}</span>
+                                                </div>
+                                                {% endfor %}
+                                            {% else %}
+                                            <div class="text-center py-3">
+                                                <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                                                <p class="text-muted">Menggunakan default normalization dictionary</p>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Stemming Info -->
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-gradient-dark text-white">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Enhanced Confix Stripping (ECS)
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <h6 class="text-primary">Prefixes:</h6>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    <span class="badge bg-primary">me-</span>
+                                                    <span class="badge bg-primary">ber-</span>
+                                                    <span class="badge bg-primary">ter-</span>
+                                                    <span class="badge bg-primary">di-</span>
+                                                    <span class="badge bg-primary">ke-</span>
+                                                    <span class="badge bg-primary">pe-</span>
+                                                    <span class="badge bg-primary">se-</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <h6 class="text-success">Suffixes:</h6>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    <span class="badge bg-success">-kan</span>
+                                                    <span class="badge bg-success">-an</span>
+                                                    <span class="badge bg-success">-i</span>
+                                                    <span class="badge bg-success">-nya</span>
+                                                    <span class="badge bg-success">-lah</span>
+                                                    <span class="badge bg-success">-kah</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <small class="text-muted">
+                                            <i class="fas fa-lightbulb text-warning me-1"></i>
+                                            Contoh: "mengatur" → "atur", "berkata" → "kata"
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Button -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <a href="{{ url_for('preprocessing.index') }}" class="btn btn-outline-secondary me-md-2">
+                                        <i class="fas fa-times me-2"></i>Batal
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Simpan Pengaturan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle dependent checkboxes
+document.querySelectorAll('input[type="checkbox"][name^="enable_"]').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+        const stepContainer = this.closest('.preprocessing-step');
+        const dependentInputs = stepContainer.querySelectorAll('input[type="checkbox"]:not([name^="enable_"])');
+        
+        dependentInputs.forEach(function(input) {
+            input.disabled = !checkbox.checked;
+            if (!checkbox.checked) {
+                input.checked = false;
+            }
+        });
+    });
+    
+    // Trigger on page load
+    checkbox.dispatchEvent(new Event('change'));
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const minLength = parseInt(document.querySelector('input[name="min_word_length"]').value);
+    const maxLength = parseInt(document.querySelector('input[name="max_word_length"]').value);
+    
+    if (minLength >= maxLength) {
+        e.preventDefault();
+        alert('Minimum length harus lebih kecil dari maximum length');
+        return false;
+    }
+    
+    // Show loading state
+    const submitBtn = document.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+    submitBtn.disabled = true;
+});
+
+// Auto-save indication
+let changeTimeout;
+document.querySelectorAll('input, select').forEach(function(input) {
+    input.addEventListener('change', function() {
+        clearTimeout(changeTimeout);
+        
+        // Show unsaved changes indicator
+        const saveBtn = document.querySelector('button[type="submit"]');
+        saveBtn.classList.add('btn-warning');
+        saveBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Ada Perubahan - Simpan';
+        
+        // Reset after 3 seconds
+        changeTimeout = setTimeout(function() {
+            saveBtn.classList.remove('btn-warning');
+            saveBtn.classList.add('btn-primary');
+            saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Simpan Pengaturan';
+        }, 3000);
+    });
+});
+</script>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #6610f2);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(45deg, #17a2b8, #6f42c1);
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(45deg, #343a40, #6c757d);
+}
+
+.preprocessing-step {
+    border-left: 3px solid #e9ecef;
+    padding-left: 15px;
+    position: relative;
+}
+
+.preprocessing-step:before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 8px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #6c757d;
+}
+
+.preprocessing-step:last-child {
+    border-left: none;
+}
+
+.form-check-input:disabled {
+    opacity: 0.5;
+}
+
+.stopwords-container::-webkit-scrollbar,
+.normalization-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.stopwords-container::-webkit-scrollbar-track,
+.normalization-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.stopwords-container::-webkit-scrollbar-thumb,
+.normalization-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+</style>
+{% endblock %}
