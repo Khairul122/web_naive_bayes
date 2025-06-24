@@ -61,6 +61,11 @@ class NBCModel(db.Model):
     testing_samples = db.Column(db.Integer, default=0)
     
     accuracy = db.Column(db.Float, default=0.0)
+    precision_score = db.Column(db.Float, nullable=True)
+    recall_score = db.Column(db.Float, nullable=True)
+    f1_score = db.Column(db.Float, nullable=True)
+    classification_report = db.Column(db.Text, nullable=True)
+    
     training_method = db.Column(db.String(50), default='MultinomialNB')
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
