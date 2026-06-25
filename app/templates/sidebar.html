@@ -41,7 +41,9 @@
       </a>
     </li>
     <li class="nav-item mt-4">
-      <a class="nav-link text-danger" href="{{ url_for('auth.logout') }}">
+      <a class="nav-link text-danger" href="{{ url_for('auth.logout') }}"
+         data-logout-url="{{ url_for('auth.logout') }}"
+         style="cursor:pointer;">
         <i class="mdi mdi-logout menu-icon"></i>
         <span class="menu-title">Logout</span>
       </a>

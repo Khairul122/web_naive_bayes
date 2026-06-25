@@ -21,6 +21,125 @@
   </div>
 
   {% include 'script.html' %}
+
+  <!-- ===== Global App Dialog Modal ===== -->
+  <div class="modal fade" id="appDialogModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+      <div class="modal-content border-0 shadow-lg" style="border-radius:20px;overflow:hidden;">
+        <div class="modal-body p-4 text-center">
+          <div id="appDialogIconWrap" style="width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;">
+            <i id="appDialogIcon" class="fas fa-question"></i>
+          </div>
+          <h5 class="fw-bold mb-2" id="appDialogTitle">Konfirmasi</h5>
+          <p class="text-muted mb-4" id="appDialogMessage"></p>
+          <div class="d-flex gap-2 justify-content-center">
+            <button type="button" class="btn btn-light px-4" id="appDialogBtnCancel" data-bs-dismiss="modal">Batal</button>
+            <button type="button" class="btn btn-primary px-4 fw-semibold" id="appDialogBtnConfirm">Ya, Lanjutkan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    var _bsModal = null;
+    var _onConfirm = null;
+    var _confirmed = [];
+
+    var TYPES = {
+      question: { icon: 'fas fa-question',           bg: '#e8f0fe', color: '#1565c0', btn: 'btn-primary'  },
+      warning:  { icon: 'fas fa-exclamation-triangle', bg: '#fff8e1', color: '#e65100', btn: 'btn-warning'  },
+      danger:   { icon: 'fas fa-trash-alt',           bg: '#fce4ec', color: '#b71c1c', btn: 'btn-danger'   },
+      success:  { icon: 'fas fa-check-circle',        bg: '#e8f5e9', color: '#1b5e20', btn: 'btn-success'  },
+      info:     { icon: 'fas fa-info-circle',         bg: '#e3f2fd', color: '#0d47a1', btn: 'btn-info'     },
+    };
+
+    function initModal() {
+      if (_bsModal) return _bsModal;
+      var el = document.getElementById('appDialogModal');
+      if (!el || typeof bootstrap === 'undefined') return null;
+      _bsModal = new bootstrap.Modal(el);
+      document.getElementById('appDialogBtnConfirm').addEventListener('click', function () {
+        _bsModal.hide();
+        if (typeof _onConfirm === 'function') _onConfirm();
+      });
+      return _bsModal;
+    }
+
+    function applyType(type) {
+      var cfg = TYPES[type] || TYPES.question;
+      var wrap = document.getElementById('appDialogIconWrap');
+      var icon = document.getElementById('appDialogIcon');
+      wrap.style.background = cfg.bg;
+      icon.className = cfg.icon;
+      icon.style.color = cfg.color;
+      return cfg;
+    }
+
+    window.AppDialog = {
+      confirm: function (message, title, onConfirm, opts) {
+        opts = opts || {};
+        _onConfirm = onConfirm;
+        document.getElementById('appDialogTitle').textContent = title || 'Konfirmasi';
+        document.getElementById('appDialogMessage').textContent = message;
+        document.getElementById('appDialogBtnCancel').style.display = '';
+        document.getElementById('appDialogBtnCancel').textContent = opts.cancelText || 'Batal';
+        var cfg = applyType(opts.type || 'question');
+        var btn = document.getElementById('appDialogBtnConfirm');
+        btn.className = 'btn ' + cfg.btn + ' px-4 fw-semibold';
+        btn.textContent = opts.confirmText || 'Ya, Lanjutkan';
+        var m = initModal();
+        if (m) m.show();
+      },
+      alert: function (message, title, type) {
+        _onConfirm = null;
+        document.getElementById('appDialogTitle').textContent = title || 'Informasi';
+        document.getElementById('appDialogMessage').textContent = message;
+        document.getElementById('appDialogBtnCancel').style.display = 'none';
+        var cfg = applyType(type || 'info');
+        var btn = document.getElementById('appDialogBtnConfirm');
+        btn.className = 'btn ' + cfg.btn + ' px-4 fw-semibold';
+        btn.textContent = 'OK';
+        var m = initModal();
+        if (m) m.show();
+      }
+    };
+
+    /* Auto-intercept forms with data-confirm */
+    document.querySelectorAll('form[data-confirm]').forEach(function (form) {
+      form.addEventListener('submit', function (e) {
+        var idx = _confirmed.indexOf(form);
+        if (idx !== -1) { _confirmed.splice(idx, 1); return; }
+        e.preventDefault();
+        AppDialog.confirm(
+          form.dataset.confirm,
+          form.dataset.confirmTitle || 'Konfirmasi',
+          function () {
+            _confirmed.push(form);
+            form.requestSubmit ? form.requestSubmit() : form.submit();
+          },
+          { type: form.dataset.confirmType || 'question', confirmText: form.dataset.confirmText || 'Ya, Lanjutkan' }
+        );
+      });
+    });
+
+    /* Logout confirm */
+    document.querySelectorAll('[data-logout-url]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        var url = el.dataset.logoutUrl;
+        AppDialog.confirm(
+          'Apakah Anda yakin ingin keluar dari sistem?',
+          'Konfirmasi Logout',
+          function () { window.location.href = url; },
+          { type: 'warning', confirmText: 'Ya, Logout' }
+        );
+      });
+    });
+  })();
+  </script>
+
   {% block extra_js %}{% endblock %}
 </body>
 

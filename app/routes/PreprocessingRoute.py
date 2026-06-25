@@ -8,6 +8,10 @@ import string
 import pandas as pd
 import os
 import logging
+from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
+
+stemmer_factory = StemmerFactory()
+sastrawi_stemmer = stemmer_factory.create_stemmer()
 
 preprocessing_bp = Blueprint('preprocessing', __name__, url_prefix='/preprocessing')
 
@@ -57,6 +61,81 @@ def index():
                          preprocessing_data=preprocessing_data,
                          settings=settings,
                          stats=stats)
+
+@preprocessing_bp.route('/detail/<int:preprocessing_id>')
+@login_required
+def detail(preprocessing_id):
+    user_id = session['user_id']
+
+    result = db.session.query(TextPreprocessing, TwitterScraping)\
+        .join(TwitterScraping, TextPreprocessing.tweet_id == TwitterScraping.id)\
+        .filter(TextPreprocessing.id == preprocessing_id)\
+        .filter(TextPreprocessing.processed_by == user_id)\
+        .first()
+
+    if not result:
+        flash('Data preprocessing tidak ditemukan', 'warning')
+        return redirect(url_for('preprocessing.index'))
+
+    preprocessing, tweet = result
+
+    stages = [
+        {
+            'label': 'Teks Asli',
+            'icon': 'fas fa-file-text',
+            'text': preprocessing.original_text,
+            'note': f'{preprocessing.word_count_before} kata'
+        },
+        {
+            'label': 'Cleansing',
+            'icon': 'fas fa-broom',
+            'text': preprocessing.cleaned_text,
+            'note': f'{preprocessing.removed_urls} URL, {preprocessing.removed_mentions} mention, {preprocessing.removed_hashtags} hashtag dihapus'
+        },
+        {
+            'label': 'Case Folding',
+            'icon': 'fas fa-font',
+            'text': preprocessing.case_folded_text,
+            'note': 'Konversi ke huruf kecil'
+        },
+        {
+            'label': 'Tokenizing',
+            'icon': 'fas fa-cut',
+            'text': preprocessing.tokenized_text,
+            'note': 'Pemecahan teks menjadi token kata'
+        },
+        {
+            'label': 'Stopword Removal',
+            'icon': 'fas fa-filter',
+            'text': preprocessing.filtered_text,
+            'note': f'{preprocessing.removed_stopwords} stopword dihapus'
+        },
+        {
+            'label': 'Normalization',
+            'icon': 'fas fa-spell-check',
+            'text': preprocessing.normalized_text,
+            'note': f'{preprocessing.normalized_words} kata dinormalisasi'
+        },
+        {
+            'label': 'Stemming (ECS)',
+            'icon': 'fas fa-scissors',
+            'text': preprocessing.stemmed_text,
+            'note': f'{preprocessing.stemmed_words} kata di-stem'
+        },
+        {
+            'label': 'Hasil Akhir',
+            'icon': 'fas fa-flag-checkered',
+            'text': preprocessing.final_text,
+            'note': f'{preprocessing.word_count_after} kata'
+        },
+    ]
+
+    return render_template(
+        'preprocessing/detail.html',
+        preprocessing=preprocessing,
+        tweet=tweet,
+        stages=stages
+    )
 
 @preprocessing_bp.route('/process', methods=['POST'])
 @login_required
@@ -519,22 +598,9 @@ def normalization(tokens, stats):
 def stemming_ecs(tokens, stats):
     stemmed_tokens = []
     
-    prefixes = ['me', 'ber', 'ter', 'di', 'ke', 'pe', 'se']
-    suffixes = ['kan', 'an', 'i', 'nya', 'lah', 'kah']
-    
     for token in tokens:
         original_token = token
-        stemmed_token = token.lower()
-        
-        for prefix in sorted(prefixes, key=len, reverse=True):
-            if stemmed_token.startswith(prefix) and len(stemmed_token) > len(prefix) + 2:
-                stemmed_token = stemmed_token[len(prefix):]
-                break
-        
-        for suffix in sorted(suffixes, key=len, reverse=True):
-            if stemmed_token.endswith(suffix) and len(stemmed_token) > len(suffix) + 2:
-                stemmed_token = stemmed_token[:-len(suffix)]
-                break
+        stemmed_token = sastrawi_stemmer.stem(token.lower())
         
         if stemmed_token != original_token.lower():
             stats['stemmed_words'] += 1

@@ -87,8 +87,12 @@
                                 </div>
                                 <div class="card-body">
                                     {% if stats.pending_count > 0 %}
-                                    <form method="POST" action="{{ url_for('konversi.convert_tfidf') }}" 
-                                          onsubmit="return confirm('Mulai konversi TF-IDF untuk {{ stats.pending_count }} sentiment?')" id="convertForm">
+                                    <form method="POST" action="{{ url_for('konversi.convert_tfidf') }}"
+                                          id="convertForm"
+                                          data-confirm="Mulai konversi TF-IDF untuk {{ stats.pending_count }} data sentimen?"
+                                          data-confirm-title="Konversi TF-IDF"
+                                          data-confirm-type="question"
+                                          data-confirm-text="Ya, Mulai Konversi">
                                         <div class="mb-3">
                                             <label class="form-label">Max Features</label>
                                             <input type="number" name="max_features" class="form-control" value="1000" min="100" max="10000">
@@ -127,8 +131,12 @@
                                             <i class="fas fa-table me-2"></i>Export Matrix
                                         </a>
                                         
-                                        <form method="POST" action="{{ url_for('konversi.reset') }}" 
-                                              onsubmit="return confirm('Yakin ingin menghapus semua data konversi?')" class="d-inline">
+                                        <form method="POST" action="{{ url_for('konversi.reset') }}"
+                                              class="d-inline"
+                                              data-confirm="Semua data konversi TF-IDF akan dihapus permanen!"
+                                              data-confirm-title="Reset Data Konversi"
+                                              data-confirm-type="danger"
+                                              data-confirm-text="Ya, Hapus Semua">
                                             <button type="submit" class="btn btn-outline-danger w-100">
                                                 <i class="fas fa-trash me-2"></i>Reset Konversi
                                             </button>

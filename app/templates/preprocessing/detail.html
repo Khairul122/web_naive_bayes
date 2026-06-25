@@ -1,0 +1,161 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0 fw-bold">
+                                <i class="fas fa-list-check me-2"></i>
+                                Detail Hasil Preprocessing
+                            </h3>
+                            <p class="mb-0 opacity-75">Tahapan transformasi teks dari tweet asli hingga hasil akhir</p>
+                        </div>
+                        <div class="text-end">
+                            <a href="{{ url_for('preprocessing.index') }}" class="btn btn-light">
+                                <i class="fas fa-arrow-left me-2"></i>Kembali
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+
+                    <!-- Tweet Info -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-gradient-light border-0">
+                            <h5 class="mb-0 text-dark">
+                                <i class="fas fa-info-circle me-2 text-primary"></i>Informasi Tweet
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 mb-2">
+                                    <small class="text-muted d-block">Username</small>
+                                    <span class="badge bg-primary rounded-pill">{{ tweet.username or 'Unknown' }}</span>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <small class="text-muted d-block">Tanggal Tweet</small>
+                                    <span class="fw-semibold">{{ tweet.created_at.strftime('%d %b %Y %H:%M') if tweet.created_at else '-' }}</span>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <small class="text-muted d-block">Status</small>
+                                    {% if preprocessing.processing_status == 'completed' %}
+                                    <span class="badge bg-success rounded-pill"><i class="fas fa-check"></i> Completed</span>
+                                    {% elif preprocessing.processing_status == 'failed' %}
+                                    <span class="badge bg-danger rounded-pill"><i class="fas fa-times"></i> Failed</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary rounded-pill">{{ preprocessing.processing_status }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <small class="text-muted d-block">Diproses Pada</small>
+                                    <span class="fw-semibold">{{ preprocessing.processed_at.strftime('%d %b %Y %H:%M') if preprocessing.processed_at else '-' }}</span>
+                                </div>
+                            </div>
+                            {% if tweet.tweet_url %}
+                            <a href="{{ tweet.tweet_url }}" target="_blank" rel="noopener" class="small">
+                                <i class="fas fa-external-link-alt me-1"></i>Lihat tweet asli
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Summary Stats -->
+                    <div class="row mb-4">
+                        <div class="col-md-2 col-4 mb-3">
+                            <div class="card border-0 shadow-sm text-center h-100">
+                                <div class="card-body py-3">
+                                    <h5 class="mb-0 text-primary">{{ preprocessing.word_count_before }}</h5>
+                                    <small class="text-muted">Kata Awal</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-4 mb-3">
+                            <div class="card border-0 shadow-sm text-center h-100">
+                                <div class="card-body py-3">
+                                    <h5 class="mb-0 text-success">{{ preprocessing.word_count_after }}</h5>
+                                    <small class="text-muted">Kata Akhir</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-4 mb-3">
+                            <div class="card border-0 shadow-sm text-center h-100">
+                                <div class="card-body py-3">
+                                    <h5 class="mb-0 text-danger">{{ preprocessing.removed_urls }}</h5>
+                                    <small class="text-muted">URL Dihapus</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-4 mb-3">
+                            <div class="card border-0 shadow-sm text-center h-100">
+                                <div class="card-body py-3">
+                                    <h5 class="mb-0 text-warning">{{ preprocessing.removed_mentions }}</h5>
+                                    <small class="text-muted">Mention Dihapus</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-4 mb-3">
+                            <div class="card border-0 shadow-sm text-center h-100">
+                                <div class="card-body py-3">
+                                    <h5 class="mb-0 text-info">{{ preprocessing.removed_stopwords }}</h5>
+                                    <small class="text-muted">Stopword Dihapus</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-4 mb-3">
+                            <div class="card border-0 shadow-sm text-center h-100">
+                                <div class="card-body py-3">
+                                    <h5 class="mb-0 text-secondary">{{ preprocessing.normalized_words }}</h5>
+                                    <small class="text-muted">Kata Dinormalisasi</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stage-by-stage breakdown -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-gradient-info text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-route me-2"></i>Tahapan Transformasi Teks
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% for stage in stages %}
+                            <div class="d-flex mb-3 {% if not loop.last %}pb-3 border-bottom{% endif %}">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-{% if loop.first %}primary{% elif loop.last %}success{% else %}secondary{% endif %} text-white rounded-circle d-flex align-items-center justify-content-center"
+                                         style="width: 42px; height: 42px;">
+                                        <i class="{{ stage.icon }}"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <h6 class="mb-0">
+                                            <span class="badge bg-light text-dark me-2">{{ loop.index }}</span>
+                                            {{ stage.label }}
+                                        </h6>
+                                        <small class="text-muted">{{ stage.note }}</small>
+                                    </div>
+                                    {% if stage.text %}
+                                    <div class="p-3 bg-light rounded" style="font-size: 0.9em; word-break: break-word;">
+                                        {{ stage.text }}
+                                    </div>
+                                    {% else %}
+                                    <div class="p-3 bg-light rounded text-muted" style="font-size: 0.9em;">
+                                        <i class="fas fa-minus-circle me-1"></i>Tidak ada data pada tahap ini
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

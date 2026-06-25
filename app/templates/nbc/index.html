@@ -92,8 +92,12 @@
                                 </div>
                                 <div class="card-body">
                                     {% if stats.total_tfidf > 0 %}
-                                    <form method="POST" action="{{ url_for('nbc.split_data') }}" 
-                                          onsubmit="return confirm('Split data untuk training/testing?')" id="splitForm">
+                                    <form method="POST" action="{{ url_for('nbc.split_data') }}"
+                                          id="splitForm"
+                                          data-confirm="Split data akan menghapus data training/testing sebelumnya. Lanjutkan?"
+                                          data-confirm-title="Split Data Training/Testing"
+                                          data-confirm-type="warning"
+                                          data-confirm-text="Ya, Split Sekarang">
                                         <div class="mb-3">
                                             <label class="form-label">Test Size (%)</label>
                                             <select name="test_size" class="form-select">
@@ -129,8 +133,12 @@
                                 </div>
                                 <div class="card-body">
                                     {% if stats.training_count > 0 %}
-                                    <form method="POST" action="{{ url_for('nbc.train_model') }}" 
-                                          onsubmit="return confirm('Mulai training model NBC?')" id="trainForm">
+                                    <form method="POST" action="{{ url_for('nbc.train_model') }}"
+                                          id="trainForm"
+                                          data-confirm="Model NBC yang sudah ada akan diganti. Mulai training sekarang?"
+                                          data-confirm-title="Training Model NBC"
+                                          data-confirm-type="question"
+                                          data-confirm-text="Ya, Mulai Training">
                                         <div class="mb-3">
                                             <label class="form-label">Alpha (Smoothing)</label>
                                             <input type="number" name="alpha" class="form-control" value="1.0" step="0.1" min="0.1">
@@ -158,8 +166,12 @@
                                 </div>
                                 <div class="card-body">
                                     {% if stats.model_count > 0 and stats.testing_count > 0 %}
-                                    <form method="POST" action="{{ url_for('nbc.test_model') }}" 
-                                          onsubmit="return confirm('Mulai testing model NBC?')" id="testForm">
+                                    <form method="POST" action="{{ url_for('nbc.test_model') }}"
+                                          id="testForm"
+                                          data-confirm="Mulai pengujian model NBC pada data testing?"
+                                          data-confirm-title="Testing Model NBC"
+                                          data-confirm-type="question"
+                                          data-confirm-text="Ya, Mulai Testing">
                                         <button type="submit" class="btn btn-danger w-100 mb-3" id="testBtn">
                                             <i class="fas fa-vial me-2"></i>
                                             Test Model
@@ -190,8 +202,12 @@
                                         {% endif %}
                                         
                                         {% if stats.training_count > 0 or stats.testing_count > 0 or stats.model_count > 0 %}
-                                        <form method="POST" action="{{ url_for('nbc.reset') }}" 
-                                              onsubmit="return confirm('Yakin ingin menghapus semua data NBC?')" class="d-inline">
+                                        <form method="POST" action="{{ url_for('nbc.reset') }}"
+                                              class="d-inline"
+                                              data-confirm="Semua data training, testing, dan model NBC akan dihapus permanen!"
+                                              data-confirm-title="Reset Semua Data NBC"
+                                              data-confirm-type="danger"
+                                              data-confirm-text="Ya, Hapus Semua">
                                             <button type="submit" class="btn btn-outline-danger w-100">
                                                 <i class="fas fa-trash me-2"></i>Reset NBC
                                             </button>
@@ -421,30 +437,104 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-document.getElementById('splitForm')?.addEventListener('submit', function() {
-    const btn = document.getElementById('splitBtn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sedang split...';
-    btn.disabled = true;
-});
-
-document.getElementById('trainForm')?.addEventListener('submit', function() {
-    const btn = document.getElementById('trainBtn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sedang training...';
-    btn.disabled = true;
-});
-
-document.getElementById('testForm')?.addEventListener('submit', function() {
-    const btn = document.getElementById('testBtn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sedang testing...';
-    btn.disabled = true;
-});
-
-if (document.querySelector('.alert-info')) {
-    setTimeout(() => {
-        location.reload();
-    }, 3000);
+<style>
+#nbc-loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
 }
+#nbc-loading-overlay.active {
+    display: flex;
+}
+.nbc-loading-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 48px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    max-width: 340px;
+    width: 90%;
+}
+.nbc-spinner-ring {
+    width: 64px;
+    height: 64px;
+    border: 6px solid #e9ecef;
+    border-top-color: #4e73df;
+    border-radius: 50%;
+    animation: nbc-spin 0.9s linear infinite;
+    margin: 0 auto 20px;
+}
+@keyframes nbc-spin {
+    to { transform: rotate(360deg); }
+}
+.nbc-loading-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #343a40;
+    margin-bottom: 6px;
+}
+.nbc-loading-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 16px;
+}
+.nbc-loading-dots span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4e73df;
+    margin: 0 3px;
+    animation: nbc-bounce 1.2s ease-in-out infinite;
+}
+.nbc-loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.nbc-loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes nbc-bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+</style>
+
+<div id="nbc-loading-overlay">
+    <div class="nbc-loading-box">
+        <div class="nbc-spinner-ring"></div>
+        <div class="nbc-loading-title" id="nbc-loading-title">Memproses...</div>
+        <div class="nbc-loading-subtitle" id="nbc-loading-subtitle">Harap tunggu, jangan tutup halaman ini</div>
+        <div class="nbc-loading-dots">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+</div>
+
+<script>
+function showNBCLoading(title, subtitle) {
+    document.getElementById('nbc-loading-title').textContent = title;
+    document.getElementById('nbc-loading-subtitle').textContent = subtitle || 'Harap tunggu, jangan tutup halaman ini';
+    document.getElementById('nbc-loading-overlay').classList.add('active');
+}
+
+document.getElementById('splitForm')?.addEventListener('submit', function(e) {
+    if (!e.defaultPrevented) showNBCLoading('Membagi Data...', 'Sedang memproses split training & testing');
+});
+
+document.getElementById('trainForm')?.addEventListener('submit', function(e) {
+    if (!e.defaultPrevented) showNBCLoading('Melatih Model NBC...', 'Proses training Multinomial Naive Bayes');
+});
+
+document.getElementById('testForm')?.addEventListener('submit', function(e) {
+    if (!e.defaultPrevented) showNBCLoading('Menguji Model...', 'Sedang menghitung prediksi & evaluasi');
+});
+
+document.querySelectorAll('form[action*="reset"]').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+        if (!e.defaultPrevented) showNBCLoading('Mereset Data NBC...', 'Menghapus semua data training, testing & model');
+    });
+});
 </script>
 {% endblock %}
 
