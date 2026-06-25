@@ -1,38 +1,61 @@
 {% extends "layout.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<div class="container-fluid mt-4">
-  <!-- Welcome Card -->
+<div class="container-fluid mt-4 dashboard-page">
   <div class="row mb-4">
     <div class="col-12">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body p-4">
-          <div class="row align-items-center">
-            <div class="col-md-2 text-center">
-              <img
-                src="{{ url_for('static', filename='logo.png') }}"
-                alt="Logo"
-                width="80"
-                class="mb-2"
-              />
-            </div>
-            <div class="col-md-10">
-              <h3 class="text-primary fw-bold mb-2">Sistem Analisis Sentiment NBC</h3>
-              <p class="text-muted mb-2">Klasifikasi Sentiment dengan Naïve Bayes Classifier</p>
-              <p class="fs-6 text-dark mb-0">
-                Selamat datang, <strong class="text-success">{{ username }}</strong>! 
-                Kelola analisis sentiment dengan mudah dan efisien.
-                {% if stats.model_trained %}
-                <br><small class="text-muted">
-                  Status: Model NBC 
-                  {% if stats.model_tested %}
-                  <span class="text-success">sudah diuji</span> dengan akurasi {{ stats.nbc_accuracy }}%
-                  {% else %}
-                  <span class="text-warning">sudah dilatih</span>, siap untuk testing
-                  {% endif %}
-                </small>
-                {% endif %}
+      <div class="card shadow-lg border-0 dashboard-hero">
+        <div class="card-body p-4 p-xl-5">
+          <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="dashboard-logo-badge">
+                  <img src="{{ url_for('static', filename='Logo.png') }}" alt="Logo NBC" />
+                </span>
+                <div>
+                  <p class="dashboard-eyebrow mb-1">Admin Dashboard</p>
+                  <h3 class="fw-bold mb-0">Sistem Analisis Sentimen NBC</h3>
+                </div>
+              </div>
+              <p class="dashboard-lead mb-3">
+                Selamat datang, <strong>{{ username }}</strong>. Pantau alur scraping, labeling sentimen, TF-IDF,
+                dan model Naive Bayes dari satu halaman.
               </p>
+              {% if stats.model_trained %}
+              <div class="dashboard-status-pill">
+                <i class="fas fa-brain me-2"></i>
+                Model NBC
+                {% if stats.model_tested %}
+                <span>sudah diuji dengan akurasi {{ stats.nbc_accuracy }}%</span>
+                {% else %}
+                <span>sudah dilatih dan siap untuk testing</span>
+                {% endif %}
+              </div>
+              {% else %}
+              <div class="dashboard-status-pill dashboard-status-muted">
+                <i class="fas fa-circle-info me-2"></i>
+                Model NBC belum dilatih
+              </div>
+              {% endif %}
+            </div>
+            <div class="col-lg-4">
+              <div class="dashboard-hero-panel">
+                <span class="dashboard-panel-label">Pipeline</span>
+                <strong>{{ stats.total_tweets if stats else 0 }}</strong>
+                <small>tweet tersedia untuk proses analisis</small>
+                <div class="dashboard-panel-line">
+                  <span style="width: {{ 100 if stats.model_tested else 72 if stats.model_trained else 38 }}%;"></span>
+                </div>
+                <p class="mb-0">
+                  {% if stats.model_tested %}
+                  Pipeline lengkap sampai evaluasi model.
+                  {% elif stats.model_trained %}
+                  Lanjutkan ke testing model.
+                  {% else %}
+                  Mulai dari scraping dan labeling data.
+                  {% endif %}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -40,83 +63,73 @@
     </div>
   </div>
 
-  <!-- Stats Cards -->
-  <div class="row mb-4">
-    <div class="col-md-3 mb-3">
-      <div class="card bg-primary text-white border-0 shadow-sm">
-        <div class="card-body text-center">
-          <i class="fas fa-twitter fa-2x mb-2"></i>
-          <h4 class="fw-bold">{{ stats.total_tweets if stats else 0 }}</h4>
-          <p class="mb-0">Total Tweets</p>
+  <div class="row mb-4 g-3">
+    <div class="col-sm-6 col-xl-3">
+      <div class="dashboard-stat-card card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <span class="dashboard-icon"><i class="fas fa-twitter"></i></span>
+          <p>Total Tweets</p>
+          <h4>{{ stats.total_tweets if stats else 0 }}</h4>
         </div>
       </div>
     </div>
-    <div class="col-md-3 mb-3">
-      <div class="card bg-warning text-white border-0 shadow-sm">
-        <div class="card-body text-center">
-          <i class="fas fa-heart fa-2x mb-2"></i>
-          <h4 class="fw-bold">{{ stats.sentiment_count if stats else 0 }}</h4>
-          <p class="mb-0">Sentiment Analysis</p>
+    <div class="col-sm-6 col-xl-3">
+      <div class="dashboard-stat-card card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <span class="dashboard-icon"><i class="fas fa-heart"></i></span>
+          <p>Analisis Sentimen</p>
+          <h4>{{ stats.sentiment_count if stats else 0 }}</h4>
         </div>
       </div>
     </div>
-    <div class="col-md-3 mb-3">
-      <div class="card bg-success text-white border-0 shadow-sm">
-        <div class="card-body text-center">
-          <i class="fas fa-exchange-alt fa-2x mb-2"></i>
-          <h4 class="fw-bold">{{ stats.tfidf_count if stats else 0 }}</h4>
-          <p class="mb-0">TF-IDF Features</p>
+    <div class="col-sm-6 col-xl-3">
+      <div class="dashboard-stat-card card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <span class="dashboard-icon"><i class="fas fa-exchange-alt"></i></span>
+          <p>Fitur TF-IDF</p>
+          <h4>{{ stats.tfidf_count if stats else 0 }}</h4>
         </div>
       </div>
     </div>
-    <div class="col-md-3 mb-3">
-      <div class="card bg-danger text-white border-0 shadow-sm">
-        <div class="card-body text-center">
-          <i class="fas fa-brain fa-2x mb-2"></i>
-          <h4 class="fw-bold">{{ stats.nbc_accuracy if stats else 0 }}%</h4>
-          <p class="mb-0">NBC Akurasi</p>
+    <div class="col-sm-6 col-xl-3">
+      <div class="dashboard-stat-card card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <span class="dashboard-icon"><i class="fas fa-brain"></i></span>
+          <p>Akurasi NBC</p>
+          <h4>{{ stats.nbc_accuracy if stats else 0 }}%</h4>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Sentiment Distribution (if available) -->
   {% if stats.sentiment_count > 0 %}
   <div class="row mb-4">
     <div class="col-12">
-      <div class="card border-0 shadow-sm">
-        <div class="card-header bg-light">
-          <h5 class="mb-0 text-dark">
-            <i class="fas fa-chart-pie me-2 text-info"></i>Distribusi Sentiment
-          </h5>
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient-primary text-white py-3">
+          <h5 class="mb-0 fw-bold"><i class="fas fa-chart-pie me-2"></i>Distribusi Sentimen</h5>
         </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-4 text-center">
-              <div class="mb-2">
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="dashboard-sentiment-box">
                 <span class="badge bg-success fs-6">{{ stats.positif_count }}</span>
-                <h6 class="text-success">Positif</h6>
-                {% if stats.sentiment_count > 0 %}
-                <small class="text-muted">{{ "%.1f"|format(stats.positif_count / stats.sentiment_count * 100) }}%</small>
-                {% endif %}
+                <h6 class="text-success mb-1">Positif</h6>
+                <small class="text-muted">{{ "%.1f"|format(stats.positif_count / stats.sentiment_count * 100) }}% dari data berlabel</small>
               </div>
             </div>
-            <div class="col-md-4 text-center">
-              <div class="mb-2">
+            <div class="col-md-4">
+              <div class="dashboard-sentiment-box">
                 <span class="badge bg-danger fs-6">{{ stats.negatif_count }}</span>
-                <h6 class="text-danger">Negatif</h6>
-                {% if stats.sentiment_count > 0 %}
-                <small class="text-muted">{{ "%.1f"|format(stats.negatif_count / stats.sentiment_count * 100) }}%</small>
-                {% endif %}
+                <h6 class="text-danger mb-1">Negatif</h6>
+                <small class="text-muted">{{ "%.1f"|format(stats.negatif_count / stats.sentiment_count * 100) }}% dari data berlabel</small>
               </div>
             </div>
-            <div class="col-md-4 text-center">
-              <div class="mb-2">
+            <div class="col-md-4">
+              <div class="dashboard-sentiment-box">
                 <span class="badge bg-secondary fs-6">{{ stats.netral_count }}</span>
-                <h6 class="text-secondary">Netral</h6>
-                {% if stats.sentiment_count > 0 %}
-                <small class="text-muted">{{ "%.1f"|format(stats.netral_count / stats.sentiment_count * 100) }}%</small>
-                {% endif %}
+                <h6 class="text-secondary mb-1">Netral</h6>
+                <small class="text-muted">{{ "%.1f"|format(stats.netral_count / stats.sentiment_count * 100) }}% dari data berlabel</small>
               </div>
             </div>
           </div>
@@ -125,42 +138,41 @@
     </div>
   </div>
   {% endif %}
+
   <div class="row mb-4">
     <div class="col-12">
-      <div class="card border-0 shadow-sm">
-        <div class="card-header bg-light">
-          <h5 class="mb-0 text-dark">
-            <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
-          </h5>
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient-secondary text-white py-3">
+          <h5 class="mb-0 fw-bold"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
         </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-3 mb-3">
-              <a href="/scrapping" class="btn btn-outline-primary btn-lg w-100 h-100">
-                <i class="fas fa-twitter fa-2x mb-2 d-block"></i>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6 col-xl-3">
+              <a href="/scrapping" class="dashboard-action">
+                <span><i class="fas fa-twitter"></i></span>
                 <strong>Scraping Tweet</strong>
-                <small class="d-block text-muted">Ambil data dari Twitter</small>
+                <small>Ambil data dari Twitter</small>
               </a>
             </div>
-            <div class="col-md-3 mb-3">
-              <a href="/sentimen" class="btn btn-outline-warning btn-lg w-100 h-100">
-                <i class="fas fa-heart fa-2x mb-2 d-block"></i>
-                <strong>Sentiment Analysis</strong>
-                <small class="d-block text-muted">Analisis sentiment otomatis</small>
+            <div class="col-md-6 col-xl-3">
+              <a href="/sentimen" class="dashboard-action">
+                <span><i class="fas fa-heart"></i></span>
+                <strong>Analisis Sentimen</strong>
+                <small>Label positif, negatif, netral</small>
               </a>
             </div>
-            <div class="col-md-3 mb-3">
-              <a href="/konversi" class="btn btn-outline-success btn-lg w-100 h-100">
-                <i class="fas fa-exchange-alt fa-2x mb-2 d-block"></i>
-                <strong>TF-IDF Conversion</strong>
-                <small class="d-block text-muted">Konversi ke fitur numerik</small>
+            <div class="col-md-6 col-xl-3">
+              <a href="/konversi" class="dashboard-action">
+                <span><i class="fas fa-exchange-alt"></i></span>
+                <strong>Konversi TF-IDF</strong>
+                <small>Ubah teks jadi fitur numerik</small>
               </a>
             </div>
-            <div class="col-md-3 mb-3">
-              <a href="/nbc" class="btn btn-outline-danger btn-lg w-100 h-100">
-                <i class="fas fa-brain fa-2x mb-2 d-block"></i>
-                <strong>NBC Classification</strong>
-                <small class="d-block text-muted">Machine learning model</small>
+            <div class="col-md-6 col-xl-3">
+              <a href="/nbc" class="dashboard-action">
+                <span><i class="fas fa-brain"></i></span>
+                <strong>Klasifikasi NBC</strong>
+                <small>Latih dan evaluasi model</small>
               </a>
             </div>
           </div>
@@ -169,44 +181,33 @@
     </div>
   </div>
 
-  <!-- Workflow Process -->
   <div class="row mb-4">
     <div class="col-12">
-      <div class="card border-0 shadow-sm">
-        <div class="card-header bg-light">
-          <h5 class="mb-0 text-dark">
-            <i class="fas fa-sitemap me-2 text-info"></i>Alur Kerja Sistem
-          </h5>
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient-info text-white py-3">
+          <h5 class="mb-0 fw-bold"><i class="fas fa-sitemap me-2"></i>Alur Kerja Sistem</h5>
         </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-3 text-center mb-3">
-              <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                <span class="fw-bold fs-4">1</span>
-              </div>
-              <h6 class="mt-2 text-primary">Scraping</h6>
-              <small class="text-muted">Ambil data tweet dari Twitter</small>
+        <div class="card-body p-4">
+          <div class="dashboard-workflow">
+            <div class="dashboard-workflow-item">
+              <span>1</span>
+              <h6>Scraping</h6>
+              <small>Ambil data tweet dari Twitter</small>
             </div>
-            <div class="col-md-3 text-center mb-3">
-              <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                <span class="fw-bold fs-4">2</span>
-              </div>
-              <h6 class="mt-2 text-warning">Sentiment</h6>
-              <small class="text-muted">Analisis sentiment positif/negatif/netral</small>
+            <div class="dashboard-workflow-item">
+              <span>2</span>
+              <h6>Sentimen</h6>
+              <small>Analisis positif, negatif, netral</small>
             </div>
-            <div class="col-md-3 text-center mb-3">
-              <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                <span class="fw-bold fs-4">3</span>
-              </div>
-              <h6 class="mt-2 text-success">TF-IDF</h6>
-              <small class="text-muted">Konversi teks ke fitur numerik</small>
+            <div class="dashboard-workflow-item">
+              <span>3</span>
+              <h6>TF-IDF</h6>
+              <small>Konversi teks ke fitur numerik</small>
             </div>
-            <div class="col-md-3 text-center mb-3">
-              <div class="bg-danger text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                <span class="fw-bold fs-4">4</span>
-              </div>
-              <h6 class="mt-2 text-danger">NBC</h6>
-              <small class="text-muted">Klasifikasi dengan Naïve Bayes</small>
+            <div class="dashboard-workflow-item">
+              <span>4</span>
+              <h6>NBC</h6>
+              <small>Klasifikasi dengan Naive Bayes</small>
             </div>
           </div>
         </div>
@@ -214,22 +215,19 @@
     </div>
   </div>
 
-  <!-- Recent Activity -->
   {% if recent_activity %}
   <div class="row">
     <div class="col-12">
-      <div class="card border-0 shadow-sm">
-        <div class="card-header bg-light">
-          <h5 class="mb-0 text-dark">
-            <i class="fas fa-clock me-2 text-secondary"></i>Aktivitas Terbaru
-          </h5>
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient-dark text-white py-3">
+          <h5 class="mb-0 fw-bold"><i class="fas fa-clock me-2"></i>Aktivitas Terbaru</h5>
         </div>
-        <div class="card-body">
-          <div class="timeline">
+        <div class="card-body p-4">
+          <div class="timeline dashboard-timeline">
             {% for activity in recent_activity %}
             <div class="d-flex mb-3">
               <div class="flex-shrink-0">
-                <div class="bg-{{ activity.color or 'secondary' }} text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                <div class="dashboard-activity-icon">
                   <i class="fas fa-{{ activity.icon or 'circle' }}"></i>
                 </div>
               </div>
@@ -249,25 +247,248 @@
 </div>
 
 <style>
-.btn-lg {
-  padding: 1.5rem 1rem;
-  min-height: 120px;
+.dashboard-page {
+  color: #21324a;
+}
+
+.dashboard-hero {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(78, 142, 247, 0.24), transparent 28%),
+    linear-gradient(135deg, #ffffff 0%, #f4f8fd 48%, var(--blue-pale) 100%);
+}
+
+.dashboard-logo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  border-radius: var(--radius);
+  background: #ffffff;
+  box-shadow: 0 12px 34px rgba(13, 71, 161, 0.14);
+}
+
+.dashboard-logo-badge img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+
+.dashboard-eyebrow,
+.dashboard-panel-label {
+  color: var(--blue-mid);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-lead {
+  max-width: 760px;
+  color: #5a6b85;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.dashboard-lead strong {
+  color: var(--blue-deep);
+}
+
+.dashboard-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  color: var(--blue-deep);
+  background: rgba(232, 241, 253, 0.95);
+  font-weight: 600;
+}
+
+.dashboard-status-pill span {
+  color: var(--blue-mid);
+}
+
+.dashboard-status-muted {
+  color: #5a6b85;
+}
+
+.dashboard-hero-panel {
+  padding: 1.35rem;
+  border-radius: var(--radius);
+  background: #ffffff;
+  box-shadow: 0 18px 46px rgba(13, 71, 161, 0.13);
+}
+
+.dashboard-hero-panel strong {
+  display: block;
+  color: var(--blue-deep);
+  font-size: 2.4rem;
+  line-height: 1;
+  margin-top: 0.45rem;
+}
+
+.dashboard-hero-panel small,
+.dashboard-hero-panel p {
+  color: #5a6b85;
+}
+
+.dashboard-panel-line {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--blue-pale);
+  margin: 1rem 0;
+}
+
+.dashboard-panel-line span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue-deep), var(--blue-light));
+}
+
+.dashboard-stat-card {
+  background: linear-gradient(135deg, #ffffff, #f6f9fe);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-stat-card:hover,
+.dashboard-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px rgba(13, 71, 161, 0.12) !important;
+}
+
+.dashboard-stat-card .card-body {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dashboard-icon,
+.dashboard-action span,
+.dashboard-activity-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--blue-deep), var(--blue-light));
+}
+
+.dashboard-stat-card p {
+  color: #5a6b85;
+  margin: 0.9rem 0 0.25rem;
+  font-weight: 600;
+}
+
+.dashboard-stat-card h4 {
+  color: var(--blue-deep);
+  font-weight: 700;
+  margin: 0;
+}
+
+.dashboard-sentiment-box {
+  min-height: 128px;
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  background: #f7faff;
+  text-align: center;
+}
+
+.dashboard-sentiment-box .badge {
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-action {
+  min-height: 150px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 0.55rem;
+  padding: 1.25rem;
+  border: 1px solid var(--blue-pale);
+  border-radius: var(--radius);
+  color: var(--blue-deep);
+  background: #ffffff;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.dashboard-action:hover {
+  color: var(--blue-deep);
+  border-color: rgba(21, 101, 192, 0.28);
+  text-decoration: none;
+}
+
+.dashboard-action small {
+  color: #5a6b85;
+}
+
+.dashboard-workflow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.dashboard-workflow-item {
+  position: relative;
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  background: #f7faff;
+}
+
+.dashboard-workflow-item span {
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
+  font-weight: 700;
+  margin-bottom: 0.9rem;
 }
 
-.card {
-  transition: transform 0.2s ease-in-out;
+.dashboard-workflow-item h6 {
+  color: var(--blue-deep);
+  font-weight: 700;
 }
 
-.card:hover {
-  transform: translateY(-2px);
+.dashboard-workflow-item small {
+  color: #5a6b85;
 }
 
-.timeline .d-flex:last-child {
+.dashboard-activity-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+}
+
+.dashboard-timeline .d-flex:last-child {
   margin-bottom: 0 !important;
+}
+
+@media (max-width: 991.98px) {
+  .dashboard-workflow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 575.98px) {
+  .dashboard-status-pill {
+    align-items: flex-start;
+    border-radius: var(--radius);
+  }
+
+  .dashboard-workflow {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
 {% endblock %}

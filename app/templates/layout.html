@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 {% include 'header.html' %}
 
 <body class="with-welcome-text">
+  <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
   <div class="container-scroller">
     {% include 'navbar.html' %}
     <div class="container-fluid page-body-wrapper">
-      {% include 'setting_panel.html' %}
       {% include 'sidebar.html' %}
-      <div class="main-panel">
+      <main class="main-panel" id="main-content" tabindex="-1">
         <div class="content-wrapper">
           <div class="row">
             <div class="col-sm-12">
@@ -16,11 +16,12 @@
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   </div>
 
   {% include 'script.html' %}
+  {% block extra_js %}{% endblock %}
 </body>
 
 </html>

@@ -1,22 +1,22 @@
 {% extends 'layout.html' %}
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid py-4 scrapping-page">
     <div class="row">
         <div class="col-12">
             <div class="card shadow-lg border-0">
                 <div class="card-header bg-gradient-primary text-white py-3">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3">
                         <div>
-                            <h3 class="mb-0 fw-bold">
-                                <i class="fas fa-twitter me-2"></i>
-                                X Scrapping Enhanced
+                            <p class="scrapping-eyebrow mb-1">Data Acquisition</p>
+                            <h3 class="mb-1 fw-bold">
+                                <i class="fas fa-twitter me-2"></i>Scraping X / Twitter
                             </h3>
-                            <p class="mb-0 opacity-75">Kumpulkan semua jenis konten: Tweet, Reply, Retweet, Quote, Media</p>
+                            <p class="mb-0 opacity-75">Kumpulkan tweet, reply, retweet, quote, dan media untuk dataset sentimen.</p>
                         </div>
-                        <div class="text-end">
-                            <span class="badge bg-light text-dark fs-6">
-                                <i class="fas fa-database me-1"></i>Total: {{ total_tweets }} tweets
-                            </span>
+                        <div class="scrapping-total-badge">
+                            <i class="fas fa-database me-2"></i>
+                            <span>{{ total_tweets }}</span>
+                            <small>total data</small>
                         </div>
                     </div>
                 </div>
@@ -33,15 +33,12 @@
                         {% endif %}
                     {% endwith %}
 
-                    <div class="row">
-                        <!-- Left Sidebar: Controls & Stats -->
-                        <div class="col-lg-4 col-md-5 mb-4">
-                            <!-- Scraping Form -->
-                            <div class="card border-0 shadow-sm h-auto mb-3">
+                    <div class="row g-4">
+                        <div class="col-lg-4 col-md-5">
+                            <div class="card border-0 shadow-sm mb-3 scrapping-control-card">
                                 <div class="card-header bg-gradient-light border-0">
-                                    <h5 class="mb-0 text-dark">
-                                        <i class="fas fa-cog me-2 text-primary"></i>
-                                        Pengaturan Scraping
+                                    <h5 class="mb-0 text-dark fw-bold">
+                                        <i class="fas fa-sliders me-2 text-primary"></i>Pengaturan Scraping
                                     </h5>
                                 </div>
                                 <div class="card-body">
@@ -50,89 +47,75 @@
                                             <label class="form-label fw-semibold">
                                                 <i class="fas fa-search me-1"></i>Search Keyword
                                             </label>
-                                            <textarea class="form-control border-2" name="search_keyword" rows="3" 
+                                            <textarea class="form-control border-2" name="search_keyword" rows="3"
                                                    placeholder='"Prabowo Subianto" OR "Kabinet Prabowo" OR "Presiden Prabowo"' required></textarea>
-                                            <small class="text-muted">
-                                                Contoh: "Prabowo", "Gibran", atau gunakan OR untuk multiple keyword
-                                            </small>
+                                            <small class="text-muted">Gunakan keyword spesifik atau operator OR untuk beberapa keyword.</small>
                                         </div>
-                                        
+
                                         <div class="mb-3">
                                             <label class="form-label fw-semibold">
                                                 <i class="fas fa-bullseye me-1"></i>Target Jumlah
                                             </label>
-                                            <select class="form-control border-2" name="limit">
+                                            <select class="form-select border-2" name="limit">
                                                 <option value="100">100 postingan</option>
                                                 <option value="500">500 postingan</option>
                                                 <option value="1000" selected>1000 postingan</option>
                                                 <option value="2000">2000 postingan</option>
                                                 <option value="5000">5000 postingan</option>
                                             </select>
-                                            <small class="text-muted">Termasuk semua jenis konten</small>
+                                            <small class="text-muted">Target mencakup semua jenis konten.</small>
                                         </div>
-                                        
+
                                         <div class="mb-3">
                                             <label class="form-label fw-semibold">
                                                 <i class="fas fa-filter me-1"></i>Jenis Konten
                                             </label>
-                                            <div class="row">
-                                                <div class="col-6">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" name="include_replies" value="1" checked>
-                                                        <label class="form-check-label">
-                                                            <i class="fas fa-reply me-1 text-info"></i>Replies
-                                                        </label>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" name="include_retweets" value="1" checked>
-                                                        <label class="form-check-label">
-                                                            <i class="fas fa-retweet me-1 text-success"></i>Retweets
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" checked disabled>
-                                                        <label class="form-check-label">
-                                                            <i class="fas fa-quote-left me-1 text-warning"></i>Quotes
-                                                        </label>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" checked disabled>
-                                                        <label class="form-check-label">
-                                                            <i class="fas fa-image me-1 text-danger"></i>Media
-                                                        </label>
-                                                    </div>
-                                                </div>
+                                            <div class="scrapping-check-grid">
+                                                <label class="scrapping-check">
+                                                    <input class="form-check-input" type="checkbox" name="include_replies" value="1" checked>
+                                                    <span><i class="fas fa-reply me-1"></i>Replies</span>
+                                                </label>
+                                                <label class="scrapping-check">
+                                                    <input class="form-check-input" type="checkbox" name="include_retweets" value="1" checked>
+                                                    <span><i class="fas fa-retweet me-1"></i>Retweets</span>
+                                                </label>
+                                                <label class="scrapping-check">
+                                                    <input class="form-check-input" type="checkbox" checked disabled>
+                                                    <span><i class="fas fa-quote-left me-1"></i>Quotes</span>
+                                                </label>
+                                                <label class="scrapping-check">
+                                                    <input class="form-check-input" type="checkbox" checked disabled>
+                                                    <span><i class="fas fa-image me-1"></i>Media</span>
+                                                </label>
                                             </div>
-                                            <small class="text-muted">Quotes & Media selalu disertakan untuk hasil maksimal</small>
+                                            <small class="text-muted">Quotes dan media selalu disertakan untuk hasil maksimal.</small>
                                         </div>
-                                        
+
                                         <div class="mb-4">
                                             <label class="form-label fw-semibold">
                                                 <i class="fas fa-key me-1"></i>Auth Token
                                             </label>
                                             <div class="input-group">
-                                                <input type="password" class="form-control border-2" name="auth_token" 
+                                                <input type="password" class="form-control border-2" name="auth_token"
                                                        value="9f51ed906269b1876f7d3d1cb52ecb6685ac0f05" required id="authToken">
-                                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                                <button class="btn btn-outline-primary" type="button" onclick="togglePassword()">
                                                     <i class="fas fa-eye" id="toggleIcon"></i>
                                                 </button>
                                             </div>
-                                            <small class="text-muted">Token autentikasi Twitter API</small>
+                                            <small class="text-muted">Token autentikasi X/Twitter.</small>
                                         </div>
-                                        
+
                                         <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mb-2" id="scrapingBtn">
-                                            <i class="fas fa-rocket me-2"></i>Mulai Scraping Comprehensive
+                                            <i class="fas fa-rocket me-2"></i>Mulai Scraping
                                         </button>
                                     </form>
-                                    
+
                                     <div class="text-center">
                                         <small class="text-muted d-block mb-2">atau</small>
                                         <form method="POST" action="{{ url_for('scrapping.scrape_demo') }}">
                                             <input type="hidden" name="search_keyword" value="demo keyword">
                                             <input type="hidden" name="limit" value="50">
-                                            <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
+                                            <button type="submit" class="btn btn-outline-primary btn-sm w-100">
                                                 <i class="fas fa-flask me-2"></i>Demo Scraping (50 tweets)
                                             </button>
                                         </form>
@@ -140,94 +123,65 @@
                                 </div>
                             </div>
 
-                            <!-- Tips Card -->
                             <div class="card border-0 shadow-sm mb-3">
-                                <div class="card-header bg-gradient-warning text-dark">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-lightbulb me-2"></i>Tips Scraping Optimal
-                                    </h6>
+                                <div class="card-header bg-gradient-secondary text-white">
+                                    <h6 class="mb-0 fw-bold"><i class="fas fa-lightbulb me-2"></i>Tips Scraping Optimal</h6>
                                 </div>
-                                <div class="card-body py-2">
-                                    <small class="text-muted">
-                                        <i class="fas fa-check-circle text-success me-1"></i>Keyword spesifik menghasilkan data lebih relevan<br>
-                                        <i class="fas fa-check-circle text-success me-1"></i>System otomatis mengumpulkan: Original + Replies + Retweets + Quotes + Media<br>
-                                        <i class="fas fa-check-circle text-success me-1"></i>Date range: 20 Okt 2024 - 15 Jun 2025<br>
-                                        <i class="fas fa-clock text-info me-1"></i>Estimasi: 2-10 menit untuk 1000 tweets
-                                    </small>
+                                <div class="card-body">
+                                    <div class="scrapping-tip-list">
+                                        <div><i class="fas fa-check-circle"></i><span>Keyword spesifik menghasilkan data lebih relevan.</span></div>
+                                        <div><i class="fas fa-check-circle"></i><span>Sistem mengumpulkan original, replies, retweets, quotes, dan media.</span></div>
+                                        <div><i class="fas fa-calendar"></i><span>Date range default: 20 Okt 2024 sampai 15 Jun 2025.</span></div>
+                                        <div><i class="fas fa-clock"></i><span>Estimasi 2 sampai 10 menit untuk 1000 tweets.</span></div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Content Breakdown Stats -->
                             <div class="card border-0 shadow-sm">
                                 <div class="card-header bg-gradient-info text-white">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-chart-pie me-2"></i>Breakdown Konten
-                                    </h6>
+                                    <h6 class="mb-0 fw-bold"><i class="fas fa-chart-pie me-2"></i>Breakdown Konten</h6>
                                 </div>
-                                <div class="card-body py-2">
-                                    <div class="row text-center mb-2">
+                                <div class="card-body">
+                                    <div class="row text-center g-2 mb-3">
                                         <div class="col-6">
-                                            <div class="border-end">
-                                                <h6 class="mb-0 text-primary">{{ total_tweets }}</h6>
-                                                <small class="text-muted">Total Data</small>
+                                            <div class="scrapping-mini-stat">
+                                                <h6>{{ total_tweets }}</h6>
+                                                <small>Total Data</small>
                                             </div>
                                         </div>
                                         <div class="col-6">
-                                            <h6 class="mb-0 text-success">
-                                                {% if tweets.items %}{{ tweets.total }}{% else %}0{% endif %}
-                                            </h6>
-                                            <small class="text-muted">Halaman Ini</small>
+                                            <div class="scrapping-mini-stat">
+                                                <h6>{% if tweets.items %}{{ tweets.total }}{% else %}0{% endif %}</h6>
+                                                <small>Halaman Ini</small>
+                                            </div>
                                         </div>
                                     </div>
-                                    <hr class="my-2">
-                                    <div class="row text-center">
-                                        <div class="col-3">
-                                            <small class="text-muted d-block">Original</small>
-                                            <span class="badge bg-primary">
-                                                <i class="fas fa-comment"></i>
-                                            </span>
-                                        </div>
-                                        <div class="col-3">
-                                            <small class="text-muted d-block">Replies</small>
-                                            <span class="badge bg-info">
-                                                <i class="fas fa-reply"></i>
-                                            </span>
-                                        </div>
-                                        <div class="col-3">
-                                            <small class="text-muted d-block">Retweets</small>
-                                            <span class="badge bg-success">
-                                                <i class="fas fa-retweet"></i>
-                                            </span>
-                                        </div>
-                                        <div class="col-3">
-                                            <small class="text-muted d-block">Media</small>
-                                            <span class="badge bg-warning">
-                                                <i class="fas fa-image"></i>
-                                            </span>
-                                        </div>
+                                    <div class="scrapping-type-grid">
+                                        <span><i class="fas fa-comment"></i>Original</span>
+                                        <span><i class="fas fa-reply"></i>Replies</span>
+                                        <span><i class="fas fa-retweet"></i>Retweets</span>
+                                        <span><i class="fas fa-image"></i>Media</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Right Side: Data Table -->
                         <div class="col-lg-8 col-md-7">
                             <div class="card border-0 shadow-sm h-100">
                                 <div class="card-header bg-gradient-light border-0">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h5 class="mb-0 text-dark">
-                                            <i class="fas fa-table me-2 text-primary"></i>
-                                            Data Comprehensive
+                                    <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-2">
+                                        <h5 class="mb-0 text-dark fw-bold">
+                                            <i class="fas fa-table me-2 text-primary"></i>Data Scraping
                                             {% if tweets.items %}
                                                 <span class="badge bg-primary">{{ tweets.total }} data</span>
                                             {% endif %}
                                         </h5>
                                         <div>
                                             {% if total_tweets > 0 %}
-                                            <a href="{{ url_for('scrapping.export') }}" class="btn btn-success btn-sm me-2">
+                                            <a href="{{ url_for('scrapping.export') }}" class="btn btn-primary btn-sm me-2">
                                                 <i class="fas fa-download me-1"></i>Export CSV
                                             </a>
-                                            <form method="POST" action="{{ url_for('scrapping.reset') }}" class="d-inline" 
+                                            <form method="POST" action="{{ url_for('scrapping.reset') }}" class="d-inline"
                                                   onsubmit="return confirm('Yakin ingin menghapus semua data?')">
                                                 <button type="submit" class="btn btn-danger btn-sm">
                                                     <i class="fas fa-trash me-1"></i>Reset All
@@ -240,114 +194,76 @@
                                 <div class="card-body p-0">
                                     {% if tweets.items %}
                                     <div class="table-responsive">
-                                        <table class="table table-hover mb-0">
-                                            <thead class="table-light">
+                                        <table class="table table-hover mb-0 scrapping-table">
+                                            <thead>
                                                 <tr>
-                                                    <th class="fw-semibold text-center" style="width: 40px;">
-                                                        <i class="fas fa-hashtag"></i>
-                                                    </th>
-                                                    <th class="fw-semibold" style="width: 100px;">
-                                                        <i class="fas fa-user me-1"></i>User
-                                                    </th>
-                                                    <th class="fw-semibold">
-                                                        <i class="fas fa-comment me-1"></i>Content
-                                                    </th>
-                                                    <th class="fw-semibold text-center" style="width: 80px;">
-                                                        <i class="fas fa-tags me-1"></i>Type
-                                                    </th>
-                                                    <th class="fw-semibold text-center" style="width: 70px;">
-                                                        <i class="fas fa-heart me-1 text-danger"></i>Likes
-                                                    </th>
-                                                    <th class="fw-semibold text-center" style="width: 70px;">
-                                                        <i class="fas fa-retweet me-1 text-success"></i>RTs
-                                                    </th>
-                                                    <th class="fw-semibold text-center" style="width: 100px;">
-                                                        <i class="fas fa-calendar me-1"></i>Date
-                                                    </th>
+                                                    <th class="text-center" style="width: 46px;"><i class="fas fa-hashtag"></i></th>
+                                                    <th style="width: 110px;"><i class="fas fa-user me-1"></i>User</th>
+                                                    <th><i class="fas fa-comment me-1"></i>Content</th>
+                                                    <th class="text-center" style="width: 88px;"><i class="fas fa-tags me-1"></i>Type</th>
+                                                    <th class="text-center" style="width: 74px;"><i class="fas fa-heart me-1"></i>Likes</th>
+                                                    <th class="text-center" style="width: 74px;"><i class="fas fa-retweet me-1"></i>RTs</th>
+                                                    <th class="text-center" style="width: 104px;"><i class="fas fa-calendar me-1"></i>Date</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for tweet in tweets.items %}
-                                                <tr class="{% if tweet.has_media %}table-warning{% elif tweet.is_reply %}table-info{% elif tweet.is_retweet %}table-success{% endif %}">
+                                                <tr>
                                                     <td class="text-center">
                                                         <small class="text-muted fw-bold">{{ loop.index + (tweets.page - 1) * tweets.per_page }}</small>
                                                     </td>
                                                     <td>
                                                         <div class="d-flex flex-column">
-                                                            <span class="badge bg-primary rounded-pill mb-1" style="font-size: 0.7em;">
-                                                                {{ tweet.username[:10] if tweet.username else 'Unknown' }}
-                                                            </span>
+                                                            <span class="scrapping-user-pill">{{ tweet.username[:10] if tweet.username else 'Unknown' }}</span>
                                                             {% if tweet.in_reply_to_screen_name %}
-                                                            <small class="text-muted">
-                                                                <i class="fas fa-arrow-right"></i> @{{ tweet.in_reply_to_screen_name[:8] }}
-                                                            </small>
+                                                            <small class="text-muted"><i class="fas fa-arrow-right"></i> @{{ tweet.in_reply_to_screen_name[:8] }}</small>
                                                             {% endif %}
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <div style="max-width: 300px;">
-                                                            <p class="mb-1 text-truncate" style="font-size: 0.9em;">
-                                                                {{ tweet.full_text[:85] }}{% if tweet.full_text|length > 85 %}...{% endif %}
-                                                            </p>
-                                                            <div class="d-flex gap-1 align-items-center">
+                                                        <div class="scrapping-content-cell">
+                                                            <p class="mb-1 text-truncate">{{ tweet.full_text[:85] }}{% if tweet.full_text|length > 85 %}...{% endif %}</p>
+                                                            <div class="d-flex gap-1 align-items-center flex-wrap">
                                                                 {% if tweet.tweet_url %}
                                                                 <a href="{{ tweet.tweet_url }}" target="_blank" class="btn btn-outline-primary btn-xs">
                                                                     <i class="fas fa-external-link-alt"></i>
                                                                 </a>
                                                                 {% endif %}
                                                                 {% if tweet.has_media %}
-                                                                <span class="badge bg-warning text-dark" style="font-size: 0.6em;">
-                                                                    <i class="fas fa-{{ 'video' if tweet.media_type == 'video' else 'image' }}"></i> 
+                                                                <span class="badge bg-warning text-dark">
+                                                                    <i class="fas fa-{{ 'video' if tweet.media_type == 'video' else 'image' }}"></i>
                                                                     {{ tweet.media_type|title if tweet.media_type else 'Media' }}
                                                                 </span>
                                                                 {% endif %}
                                                                 {% if tweet.lang and tweet.lang != 'id' %}
-                                                                <span class="badge bg-secondary" style="font-size: 0.6em;">{{ tweet.lang|upper }}</span>
+                                                                <span class="badge bg-secondary">{{ tweet.lang|upper }}</span>
                                                                 {% endif %}
                                                             </div>
                                                         </div>
                                                     </td>
                                                     <td class="text-center">
                                                         {% if tweet.is_retweet %}
-                                                        <span class="badge bg-success rounded-pill">
-                                                            <i class="fas fa-retweet"></i> RT
-                                                        </span>
+                                                        <span class="badge bg-success rounded-pill"><i class="fas fa-retweet"></i> RT</span>
                                                         {% elif tweet.is_reply %}
-                                                        <span class="badge bg-info rounded-pill">
-                                                            <i class="fas fa-reply"></i> Reply
-                                                        </span>
+                                                        <span class="badge bg-info rounded-pill"><i class="fas fa-reply"></i> Reply</span>
                                                         {% elif tweet.is_quote %}
-                                                        <span class="badge bg-warning rounded-pill">
-                                                            <i class="fas fa-quote-left"></i> Quote
-                                                        </span>
+                                                        <span class="badge bg-warning rounded-pill"><i class="fas fa-quote-left"></i> Quote</span>
                                                         {% else %}
-                                                        <span class="badge bg-primary rounded-pill">
-                                                            <i class="fas fa-comment"></i> Tweet
-                                                        </span>
+                                                        <span class="badge bg-primary rounded-pill"><i class="fas fa-comment"></i> Tweet</span>
                                                         {% endif %}
                                                     </td>
                                                     <td class="text-center">
                                                         <span class="badge bg-light text-dark">
-                                                            {% if tweet.favorite_count > 1000 %}
-                                                                {{ "%.1f"|format(tweet.favorite_count/1000) }}k
-                                                            {% else %}
-                                                                {{ tweet.favorite_count }}
-                                                            {% endif %}
+                                                            {% if tweet.favorite_count > 1000 %}{{ "%.1f"|format(tweet.favorite_count/1000) }}k{% else %}{{ tweet.favorite_count }}{% endif %}
                                                         </span>
                                                     </td>
                                                     <td class="text-center">
                                                         <span class="badge bg-light text-dark">
-                                                            {% if tweet.retweet_count > 1000 %}
-                                                                {{ "%.1f"|format(tweet.retweet_count/1000) }}k
-                                                            {% else %}
-                                                                {{ tweet.retweet_count }}
-                                                            {% endif %}
+                                                            {% if tweet.retweet_count > 1000 %}{{ "%.1f"|format(tweet.retweet_count/1000) }}k{% else %}{{ tweet.retweet_count }}{% endif %}
                                                         </span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <small class="text-muted">
-                                                            {{ tweet.created_at.strftime('%d/%m %H:%M') }}
-                                                        </small>
+                                                        <small class="text-muted">{{ tweet.created_at.strftime('%d/%m %H:%M') }}</small>
                                                     </td>
                                                 </tr>
                                                 {% endfor %}
@@ -355,7 +271,6 @@
                                         </table>
                                     </div>
 
-                                    <!-- Pagination -->
                                     {% if tweets.pages > 1 %}
                                     <div class="p-3 border-top bg-light">
                                         <nav>
@@ -367,7 +282,7 @@
                                                         </a>
                                                     </li>
                                                 {% endif %}
-                                                
+
                                                 {% for page_num in tweets.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
                                                     {% if page_num %}
                                                         {% if page_num != tweets.page %}
@@ -380,12 +295,10 @@
                                                             </li>
                                                         {% endif %}
                                                     {% else %}
-                                                        <li class="page-item disabled">
-                                                            <span class="page-link">...</span>
-                                                        </li>
+                                                        <li class="page-item disabled"><span class="page-link">...</span></li>
                                                     {% endif %}
                                                 {% endfor %}
-                                                
+
                                                 {% if tweets.has_next %}
                                                     <li class="page-item">
                                                         <a class="page-link" href="{{ url_for('scrapping.index', page=tweets.next_num) }}">
@@ -395,26 +308,19 @@
                                                 {% endif %}
                                             </ul>
                                         </nav>
-                                        
+
                                         <div class="text-center mt-2">
-                                            <small class="text-muted">
-                                                Halaman {{ tweets.page }} dari {{ tweets.pages }} 
-                                                ({{ tweets.total }} total data)
-                                            </small>
+                                            <small class="text-muted">Halaman {{ tweets.page }} dari {{ tweets.pages }} ({{ tweets.total }} total data)</small>
                                         </div>
                                     </div>
                                     {% endif %}
 
                                     {% else %}
-                                    <!-- Empty State -->
-                                    <div class="text-center py-5">
-                                        <div class="mb-4">
-                                            <i class="fas fa-database fa-4x text-muted"></i>
-                                        </div>
-                                        <h5 class="text-muted mb-3">Belum ada data tweets</h5>
+                                    <div class="scrapping-empty-state">
+                                        <div class="scrapping-empty-icon"><i class="fas fa-database"></i></div>
+                                        <h5 class="mb-3">Belum ada data tweets</h5>
                                         <p class="text-muted mb-4">
-                                            Mulai scraping untuk mengumpulkan <strong>semua jenis konten</strong>:<br>
-                                            Tweet Original, Replies, Retweets, Quote Tweets, dan Media Posts
+                                            Mulai scraping untuk mengumpulkan tweet original, replies, retweets, quote tweets, dan media posts.
                                         </p>
                                         <div class="d-flex justify-content-center gap-2 flex-wrap">
                                             <button type="button" class="btn btn-primary" onclick="document.getElementById('scrapingForm').scrollIntoView({behavior: 'smooth'})">
@@ -423,7 +329,7 @@
                                             <form method="POST" action="{{ url_for('scrapping.scrape_demo') }}" class="d-inline">
                                                 <input type="hidden" name="search_keyword" value="demo">
                                                 <input type="hidden" name="limit" value="50">
-                                                <button type="submit" class="btn btn-outline-secondary">
+                                                <button type="submit" class="btn btn-outline-primary">
                                                     <i class="fas fa-flask me-2"></i>Coba Demo
                                                 </button>
                                             </form>
@@ -441,11 +347,10 @@
 </div>
 
 <script>
-// Toggle password visibility
 function togglePassword() {
     const authToken = document.getElementById('authToken');
     const toggleIcon = document.getElementById('toggleIcon');
-    
+
     if (authToken.type === 'password') {
         authToken.type = 'text';
         toggleIcon.className = 'fas fa-eye-slash';
@@ -455,25 +360,22 @@ function togglePassword() {
     }
 }
 
-// Loading state for scraping form
 document.getElementById('scrapingForm').addEventListener('submit', function() {
     const btn = document.getElementById('scrapingBtn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sedang Scraping Comprehensive...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sedang Scraping...';
     btn.disabled = true;
-    
-    // Show progress message
+
     const alert = document.createElement('div');
     alert.className = 'alert alert-info alert-dismissible fade show border-0 shadow-sm mt-3';
     alert.innerHTML = `
         <i class="fas fa-info-circle me-2"></i>
-        Proses scraping dimulai... Sistem akan mengumpulkan Tweet, Reply, Retweet, Quote, dan Media. 
+        Proses scraping dimulai. Sistem akan mengumpulkan Tweet, Reply, Retweet, Quote, dan Media.
         Harap tunggu beberapa menit.
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    document.querySelector('.card-body').insertBefore(alert, document.querySelector('.row'));
+    document.querySelector('.scrapping-control-card .card-body').appendChild(alert);
 });
 
-// Auto-refresh stats every 30 seconds if scraping is active
 if (document.querySelector('.alert-info')) {
     setTimeout(() => {
         location.reload();
@@ -482,34 +384,173 @@ if (document.querySelector('.alert-info')) {
 </script>
 
 <style>
-.bg-gradient-light {
-    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+.scrapping-page {
+    color: #21324a;
 }
 
-.bg-gradient-warning {
-    background: linear-gradient(45deg, #ffc107, #ffeb3b);
+.scrapping-eyebrow {
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.8;
 }
 
-.bg-gradient-info {
-    background: linear-gradient(45deg, #17a2b8, #20c997);
+.scrapping-total-badge {
+    min-width: 170px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius);
+    color: var(--blue-deep);
+    background: #ffffff;
+    box-shadow: 0 14px 34px rgba(13, 71, 161, 0.18);
 }
 
-.table-warning {
-    --bs-table-bg: rgba(255, 193, 7, 0.1);
+.scrapping-total-badge span {
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1;
 }
 
-.table-info {
-    --bs-table-bg: rgba(23, 162, 184, 0.1);
+.scrapping-total-badge small {
+    color: #5a6b85;
+    font-weight: 600;
 }
 
-.table-success {
-    --bs-table-bg: rgba(40, 167, 69, 0.1);
+.scrapping-check-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.scrapping-check {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--blue-pale);
+    border-radius: var(--radius);
+    background: #f7faff;
+    color: var(--blue-deep);
+    font-weight: 600;
+}
+
+.scrapping-check span i,
+.scrapping-tip-list i,
+.scrapping-type-grid i {
+    color: var(--blue-mid);
+}
+
+.scrapping-tip-list {
+    display: grid;
+    gap: 0.7rem;
+}
+
+.scrapping-tip-list div {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    color: #5a6b85;
+    font-size: 0.86rem;
+}
+
+.scrapping-mini-stat {
+    padding: 1rem;
+    border-radius: var(--radius);
+    background: #f7faff;
+}
+
+.scrapping-mini-stat h6 {
+    margin: 0;
+    color: var(--blue-deep);
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.scrapping-mini-stat small {
+    color: #5a6b85;
+}
+
+.scrapping-type-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.scrapping-type-grid span {
+    padding: 0.65rem;
+    border-radius: var(--radius);
+    background: var(--blue-pale);
+    color: var(--blue-deep);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.scrapping-table thead {
+    background: #f4f8fd;
+    color: var(--blue-deep);
+}
+
+.scrapping-table th {
+    font-weight: 700;
+    border-bottom: 1px solid var(--blue-pale);
+}
+
+.scrapping-content-cell {
+    max-width: 340px;
+}
+
+.scrapping-content-cell p {
+    font-size: 0.9rem;
+}
+
+.scrapping-content-cell .badge {
+    font-size: 0.62rem;
+}
+
+.scrapping-user-pill {
+    display: inline-flex;
+    width: fit-content;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    color: var(--blue-deep);
+    background: var(--blue-pale);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.scrapping-empty-state {
+    padding: 4rem 1.5rem;
+    text-align: center;
+}
+
+.scrapping-empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 82px;
+    height: 82px;
+    margin-bottom: 1.25rem;
+    border-radius: var(--radius);
+    color: var(--blue-mid);
+    background: var(--blue-pale);
+    font-size: 2.1rem;
 }
 
 .btn-xs {
     padding: 0.125rem 0.25rem;
     font-size: 0.7rem;
-    border-radius: 0.2rem;
+    border-radius: 0.35rem;
+}
+
+@media (max-width: 575.98px) {
+    .scrapping-check-grid,
+    .scrapping-type-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 {% endblock %}

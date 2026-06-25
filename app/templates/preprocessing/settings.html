@@ -398,47 +398,6 @@ document.querySelectorAll('input, select').forEach(function(input) {
 </script>
 
 <style>
-.bg-gradient-primary {
-    background: linear-gradient(45deg, #007bff, #6610f2);
-}
-
-.bg-gradient-success {
-    background: linear-gradient(45deg, #28a745, #20c997);
-}
-
-.bg-gradient-warning {
-    background: linear-gradient(45deg, #ffc107, #fd7e14);
-}
-
-.bg-gradient-info {
-    background: linear-gradient(45deg, #17a2b8, #6f42c1);
-}
-
-.bg-gradient-dark {
-    background: linear-gradient(45deg, #343a40, #6c757d);
-}
-
-.preprocessing-step {
-    border-left: 3px solid #e9ecef;
-    padding-left: 15px;
-    position: relative;
-}
-
-.preprocessing-step:before {
-    content: '';
-    position: absolute;
-    left: -6px;
-    top: 8px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #6c757d;
-}
-
-.preprocessing-step:last-child {
-    border-left: none;
-}
-
 .form-check-input:disabled {
     opacity: 0.5;
 }
@@ -450,13 +409,13 @@ document.querySelectorAll('input, select').forEach(function(input) {
 
 .stopwords-container::-webkit-scrollbar-track,
 .normalization-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--blue-pale);
     border-radius: 3px;
 }
 
 .stopwords-container::-webkit-scrollbar-thumb,
 .normalization-container::-webkit-scrollbar-thumb {
-    background: #888;
+    background: var(--blue-slate);
     border-radius: 3px;
 }
 </style>

@@ -1,0 +1,39 @@
+# Virtual Environments
+.venv/
+_venv/
+venv/
+env/
+ENV/
+dist/
+build/
+*.egg-info/
+
+# Agents & AI assistants
+.agents/
+
+# Python Cache & Compiled Files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment Variables & Configuration
+.env
+.flaskenv
+*.local
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*~
+
+# Operating System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
