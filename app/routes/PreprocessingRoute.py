@@ -6,6 +6,7 @@ from datetime import datetime
 import re
 import string
 import pandas as pd
+import os
 import logging
 
 preprocessing_bp = Blueprint('preprocessing', __name__, url_prefix='/preprocessing')
@@ -168,6 +169,87 @@ def reset():
     db.session.commit()
     flash('Semua data preprocessing berhasil dihapus', 'success')
     return redirect(url_for('preprocessing.index'))
+
+@preprocessing_bp.route('/import_kbbi', methods=['POST'])
+@login_required
+def import_kbbi():
+    """Import data baku-nonbaku dari KBBI CSV ke tabel normalization_dict"""
+    user_id = session['user_id']
+    
+    try:
+        from flask import current_app
+        
+        csv_path = os.path.join(os.path.dirname(current_app.root_path), 'database', 'dictionary_baku_nonbaku.csv')
+        
+        if not os.path.exists(csv_path):
+            flash('File dictionary_baku_nonbaku.csv tidak ditemukan di folder database/', 'danger')
+            return redirect(url_for('preprocessing.settings'))
+        
+        df = pd.read_csv(csv_path, encoding='utf-8', on_bad_lines='skip')
+        logger.info(f"Membaca {len(df)} baris dari KBBI CSV")
+        
+        if 'word' not in df.columns or 'wrong' not in df.columns:
+            flash('Format CSV tidak sesuai. Kolom "word" dan "wrong" diperlukan.', 'danger')
+            return redirect(url_for('preprocessing.settings'))
+        
+        imported_count = 0
+        skipped_count = 0
+        
+        for _, row in df.iterrows():
+            try:
+                baku = str(row['word']).strip().lower()
+                nonbaku = str(row['wrong']).strip().lower()
+                
+                if not baku or not nonbaku or baku == 'nan' or nonbaku == 'nan':
+                    skipped_count += 1
+                    continue
+                
+                if baku == nonbaku:
+                    skipped_count += 1
+                    continue
+                
+                existing = NormalizationDict.query.filter_by(slang_word=nonbaku).first()
+                if existing:
+                    skipped_count += 1
+                    continue
+                
+                norm_entry = NormalizationDict(
+                    slang_word=nonbaku,
+                    standard_word=baku,
+                    category='kbbi',
+                    is_active=True,
+                    added_by=user_id
+                )
+                db.session.add(norm_entry)
+                imported_count += 1
+                
+                if imported_count % 100 == 0:
+                    db.session.flush()
+                    
+            except Exception as e:
+                logger.warning(f"Skip baris: {e}")
+                skipped_count += 1
+                continue
+        
+        db.session.commit()
+        logger.info(f"Import selesai: {imported_count} berhasil, {skipped_count} dilewati")
+        flash(f'Import KBBI berhasil! {imported_count} kata baku-nonbaku ditambahkan, {skipped_count} dilewati (duplikat/kosong)', 'success')
+        
+    except Exception as e:
+        logger.error(f"Error import KBBI: {e}")
+        db.session.rollback()
+        flash(f'Error import: {str(e)}', 'danger')
+    
+    return redirect(url_for('preprocessing.settings'))
+
+@preprocessing_bp.route('/reset_normalization', methods=['POST'])
+@login_required
+def reset_normalization():
+    """Reset semua data normalisasi"""
+    NormalizationDict.query.delete()
+    db.session.commit()
+    flash('Semua data normalisasi berhasil dihapus', 'success')
+    return redirect(url_for('preprocessing.settings'))
 
 @preprocessing_bp.route('/export')
 @login_required

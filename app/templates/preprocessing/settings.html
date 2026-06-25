@@ -273,6 +273,19 @@
                                             </div>
                                             {% endif %}
                                         </div>
+                                        <hr class="my-3">
+                                        <div class="d-flex justify-content-between gap-2">
+                                            <form action="{{ url_for('preprocessing.import_kbbi') }}" method="POST" class="w-50" id="importKbbiForm">
+                                                <button type="submit" class="btn btn-sm btn-info w-100 text-white" id="btnImportKbbi">
+                                                    <i class="fas fa-file-import me-1"></i> Import KBBI CSV
+                                                </button>
+                                            </form>
+                                            <form action="{{ url_for('preprocessing.reset_normalization') }}" method="POST" class="w-50" onsubmit="return confirm('Apakah Anda yakin ingin menghapus semua kata normalisasi?')">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                                    <i class="fas fa-trash-alt me-1"></i> Reset Data
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -394,6 +407,13 @@ document.querySelectorAll('input, select').forEach(function(input) {
             saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Simpan Pengaturan';
         }, 3000);
     });
+});
+
+// Import KBBI loading handler
+document.getElementById('importKbbiForm')?.addEventListener('submit', function() {
+    const btn = document.getElementById('btnImportKbbi');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Importing...';
+    btn.disabled = true;
 });
 </script>
 
