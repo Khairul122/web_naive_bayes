@@ -105,11 +105,15 @@ def auto_label():
     for tweet in unlabeled_tweets:
         try:
             preprocessing = TextPreprocessing.query.filter_by(tweet_id=tweet.id, processed_by=user_id).first()
-            text_to_analyze = preprocessing.final_text if preprocessing and preprocessing.final_text else tweet.full_text
 
             if use_keyword_engine or pos_dict is None:
+                text_to_analyze = preprocessing.final_text if preprocessing and preprocessing.final_text else tweet.full_text
                 sentiment_result = _fallback_keyword_label(text_to_analyze)
             else:
+                # InSet Lexicon requires negation words (tidak, bukan) that stopword removal discards.
+                # Use case_folded_text — post-cleansing/lowercase but pre-stopword-removal.
+                text_to_analyze = (preprocessing.case_folded_text if preprocessing and preprocessing.case_folded_text
+                                   else tweet.full_text.lower())
                 sentiment_result = inset_label_sentiment(text_to_analyze, pos_dict, neg_dict, threshold_pos, threshold_neg)
 
             sentiment_record = SentimentAnalysis(

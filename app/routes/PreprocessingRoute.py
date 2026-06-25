@@ -554,7 +554,7 @@ def stopword_removal(tokens, stats):
     if not stopwords:
         default_stopwords = {
             'dan', 'atau', 'yang', 'di', 'ke', 'dari', 'untuk', 'dengan', 'pada', 'dalam',
-            'adalah', 'akan', 'telah', 'sudah', 'juga', 'tidak', 'bukan', 'tetapi', 'namun',
+            'adalah', 'akan', 'telah', 'sudah', 'juga', 'tetapi', 'namun',
             'karena', 'sebab', 'oleh', 'agar', 'supaya', 'jika', 'kalau', 'bila', 'ketika',
             'saat', 'waktu', 'ini', 'itu', 'tersebut', 'maka', 'lalu', 'kemudian', 'setelah'
         }
