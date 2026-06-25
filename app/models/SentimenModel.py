@@ -27,3 +27,20 @@ class SentimentAnalysis(db.Model):
 
     def __repr__(self):
         return f'<SentimentAnalysis {self.id}: {self.sentiment_label}>'
+
+
+class SentimentSettings(db.Model):
+    __tablename__ = 'sentiment_settings'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id_user'), nullable=False, unique=True)
+
+    threshold_pos = db.Column(db.Float, default=0.5)
+    threshold_neg = db.Column(db.Float, default=-0.5)
+    labeling_engine = db.Column(db.Enum('inset', 'keyword'), default='inset')
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<SentimentSettings user={self.user_id} pos={self.threshold_pos}>'

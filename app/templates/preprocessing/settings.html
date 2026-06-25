@@ -286,6 +286,13 @@
                                                 </button>
                                             </form>
                                         </div>
+                                        <div class="mt-2">
+                                            <form action="{{ url_for('preprocessing.import_alay') }}" method="POST" id="importAlayForm">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary w-100" id="btnImportAlay">
+                                                    <i class="fas fa-upload me-1"></i> Import Kamus Alay
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -412,6 +419,13 @@ document.querySelectorAll('input, select').forEach(function(input) {
 // Import KBBI loading handler
 document.getElementById('importKbbiForm')?.addEventListener('submit', function() {
     const btn = document.getElementById('btnImportKbbi');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Importing...';
+    btn.disabled = true;
+});
+
+// Import Kamus Alay loading handler
+document.getElementById('importAlayForm')?.addEventListener('submit', function() {
+    const btn = document.getElementById('btnImportAlay');
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Importing...';
     btn.disabled = true;
 });

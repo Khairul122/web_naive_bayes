@@ -12,4 +12,8 @@ def create_app():
     db.init_app(app)
     register_routes(app)
 
+    with app.app_context():
+        from app.models.SentimenModel import SentimentSettings
+        db.create_all()
+
     return app

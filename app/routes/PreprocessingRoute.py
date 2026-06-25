@@ -242,6 +242,78 @@ def import_kbbi():
     
     return redirect(url_for('preprocessing.settings'))
 
+@preprocessing_bp.route('/import_alay', methods=['POST'])
+@login_required
+def import_alay():
+    """Import kamus alay Twitter dari CSV ke tabel normalization_dict"""
+    user_id = session['user_id']
+
+    try:
+        from flask import current_app
+
+        csv_path = os.path.join(os.path.dirname(current_app.root_path), 'database', 'kamus_alay.csv')
+
+        if not os.path.exists(csv_path):
+            flash('File kamus_alay.csv tidak ditemukan di folder database/', 'danger')
+            return redirect(url_for('preprocessing.settings'))
+
+        df = pd.read_csv(csv_path, encoding='utf-8', on_bad_lines='skip')
+        logger.info(f"Membaca {len(df)} baris dari kamus alay CSV")
+
+        if 'slang' not in df.columns or 'baku' not in df.columns:
+            flash('Format CSV tidak sesuai. Kolom "slang" dan "baku" diperlukan.', 'danger')
+            return redirect(url_for('preprocessing.settings'))
+
+        imported_count = 0
+        skipped_count = 0
+
+        for _, row in df.iterrows():
+            try:
+                slang = str(row['slang']).strip().lower()
+                baku = str(row['baku']).strip().lower()
+
+                if not slang or not baku or slang == 'nan' or baku == 'nan':
+                    skipped_count += 1
+                    continue
+
+                if slang == baku:
+                    skipped_count += 1
+                    continue
+
+                existing = NormalizationDict.query.filter_by(slang_word=slang).first()
+                if existing:
+                    skipped_count += 1
+                    continue
+
+                norm_entry = NormalizationDict(
+                    slang_word=slang,
+                    standard_word=baku,
+                    category='alay',
+                    is_active=True,
+                    added_by=user_id
+                )
+                db.session.add(norm_entry)
+                imported_count += 1
+
+                if imported_count % 100 == 0:
+                    db.session.flush()
+
+            except Exception as e:
+                logger.warning(f"Skip baris: {e}")
+                skipped_count += 1
+                continue
+
+        db.session.commit()
+        logger.info(f"Import alay selesai: {imported_count} berhasil, {skipped_count} dilewati")
+        flash(f'Import kamus alay berhasil! {imported_count} kata ditambahkan, {skipped_count} dilewati (duplikat/kosong)', 'success')
+
+    except Exception as e:
+        logger.error(f"Error import kamus alay: {e}")
+        db.session.rollback()
+        flash(f'Error import: {str(e)}', 'danger')
+
+    return redirect(url_for('preprocessing.settings'))
+
 @preprocessing_bp.route('/reset_normalization', methods=['POST'])
 @login_required
 def reset_normalization():
