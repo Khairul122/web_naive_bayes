@@ -101,13 +101,15 @@ Output: ['kabinet', 'baru', 'semoga', 'berhasil']
 
 Menghapus kata-kata yang sering muncul namun tidak membawa makna sentimen.
 
-**Sumber stopword:** Tabel `stopword_list` di database. Jika kosong, digunakan default 40 kata termasuk:
+**Sumber stopword:** Tabel `stopword_list` di database. Jika kosong, digunakan default 36 kata termasuk:
 
 ```
 dan, atau, yang, di, ke, dari, untuk, dengan, pada, dalam,
-adalah, akan, telah, sudah, juga, tidak, bukan, tetapi, namun,
+adalah, akan, telah, sudah, juga, tetapi, namun,
 karena, oleh, agar, jika, kalau, bila, ketika, ini, itu, maka
 ```
+
+> **Catatan penting:** Kata `"tidak"` dan `"bukan"` **tidak dimasukkan** ke default stopword karena keduanya adalah kata negasi yang memiliki bobot semantik. Memasukkannya akan menghapus informasi penting sebelum labeling sentimen.
 
 **Contoh:**
 ```
@@ -204,8 +206,10 @@ berbohong → -4
 
 #### 2.3.2 Algoritma Scoring InSet
 
+> **Input teks:** InSet Lexicon menganalisis `case_folded_text` — teks setelah cleansing dan lowercase, **sebelum** stopword removal. Ini penting agar kata negasi seperti `"tidak"` tetap hadir saat pencocokan leksikon (meski `"tidak"` sendiri tidak ada di entri InSet, kehadirannya menjaga konteks).
+
 ```
-GIVEN: teks = token₁, token₂, ..., tokenₙ
+GIVEN: teks = case_folded_text (pre-stopword-removal)
        pos_dict = {kata: skor_positif}  (skor > 0)
        neg_dict = {kata: skor_negatif}  (skor < 0)
 
@@ -677,6 +681,7 @@ F1_pos = 2 × 0.80 × 0.80 / (0.80 + 0.80) = 0.80
 - **Fungsi:** Memberi label sentimen pada setiap tweet secara otomatis
 - **Tabel:** `sentiment_analysis`, `sentiment_settings`
 - **Engine:** InSet Lexicon (default) atau Keyword Matching (fallback)
+- **Input teks:** `case_folded_text` untuk InSet Lexicon (pre-stopword), `final_text` untuk keyword fallback
 - **Output:** `sentiment_label` ∈ {positif, negatif, netral}, `confidence_score` ∈ [0.0, 1.0]
 - **Threshold:** Dapat dikonfigurasi per user (`threshold_pos`, `threshold_neg`)
 
@@ -705,9 +710,10 @@ F1_pos = 2 × 0.80 × 0.80 / (0.80 + 0.80) = 0.80
 twitter_scraping.full_text
         │
         ▼ [PreprocessingRoute.preprocess_text()]
-text_preprocessing.final_text  ←── teks bersih setelah 7 tahap
+text_preprocessing.case_folded_text  ←── setelah cleansing + lowercase (pre-stopword)
+text_preprocessing.final_text        ←── teks bersih setelah 7 tahap lengkap
         │
-        ▼ [SentimenRoute.inset_label_sentiment()]
+        ├─→ [SentimenRoute.inset_label_sentiment()]  ← pakai case_folded_text
 sentiment_analysis.sentiment_label     = 'positif' | 'negatif' | 'netral'
 sentiment_analysis.confidence_score    = 0.0 – 1.0
 sentiment_analysis.positive_keywords  = kata positif yang cocok (comma-separated)
@@ -857,3 +863,9 @@ Dengan random_state=42, hasil split selalu reproducible — peneliti lain dapat 
 confidence = min(|skor_total| / 5.0, 1.0)
 ```
 Nilai mendekati 1.0 berarti tweet memiliki kata-kata sentimen yang kuat. Nilai mendekati 0.0 berarti skor InSet dekat nol (label netral atau tidak ada kata sentimen yang cocok). Ini BUKAN probabilitas dalam arti statistis — hanya indikator kekuatan sentimen.
+
+### Q8: Bagaimana sistem menangani kata negasi seperti "tidak bagus"?
+
+**Jawaban:** Ini adalah salah satu keterbatasan InSet Lexicon yang perlu diakui secara jujur dalam penelitian. Sistem menggunakan `case_folded_text` (teks setelah cleansing dan lowercase, sebelum stopword removal) sebagai input InSet Lexicon — bukan `final_text` — sehingga kata `"tidak"` dan `"bukan"` tetap hadir dalam analisis. Namun, `"tidak"` bukan entri di InSet Lexicon (yang berisi kata sifat dan kata bermakna sentimen, bukan partikel negasi), sehingga frasa `"tidak bagus"` tetap menghasilkan skor `+3` dari kata `"bagus"` saja.
+
+Penanganan negasi yang benar membutuhkan parser sintaksis (misalnya: jika token sebelum kata leksikon adalah kata negasi, balik tanda skornya). Ini di luar scope penelitian ini dan merupakan rekomendasi pengembangan lebih lanjut yang dapat disebutkan di BAB V (Saran).

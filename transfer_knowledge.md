@@ -243,11 +243,15 @@ def inset_label_sentiment(text, pos_dict, neg_dict, threshold_pos=0.5, threshold
 6. Selain itu → netral
 7. `confidence = min(abs(total_score) / 5.0, 1.0)`
 
+**Input teks yang digunakan (PENTING):**
+Fungsi ini menerima `case_folded_text` — teks setelah cleansing dan lowercase, **sebelum** stopword removal. Tujuannya agar kata negasi seperti `"tidak"` dan `"bukan"` tetap hadir saat pencocokan leksikon. Jika menggunakan `final_text` (setelah stopword removal), kata negasi sudah dihapus dan menghasilkan klasifikasi yang salah.
+
 **Hal yang perlu diketahui:**
 - Satu token bisa masuk ke KEDUA list (pos dan neg) sekaligus — jarang terjadi tapi mungkin
 - InSet menggunakan integer weight, range -5 s/d +5
 - `total_score` bisa sangat besar/kecil jika teks panjang dengan banyak kata bermakna
 - Default threshold: `+0.5` (positif) dan `-0.5` (negatif) — bisa diubah per user via `SentimentSettings`
+- **Limitasi negasi:** InSet Lexicon tidak memiliki mekanisme negation handling. Kata `"tidak"` tidak ada di leksikon — jadi frasa `"tidak bagus"` tetap dihitung dari skor `"bagus"` saja. Ini adalah keterbatasan inheren InSet Lexicon yang perlu dicatat di BAB IV skripsi.
 
 ### 7.3 Preprocessing Pipeline (`PreprocessingRoute.py`)
 
@@ -266,10 +270,11 @@ Urutan tahap:
 
 **Hal yang perlu diketahui:**
 - Stopword diambil dari DB setiap kali preprocessing dijalankan — tidak di-cache
-- Jika tabel `stopword_list` kosong, digunakan **default stopword hardcoded** (38 kata)
+- Jika tabel `stopword_list` kosong, digunakan **default stopword hardcoded** (36 kata) — `'tidak'` dan `'bukan'` sengaja **tidak dimasukkan** karena keduanya adalah kata negasi yang bermakna sentimen
 - Jika tabel `normalization_dict` kosong, digunakan **default normalization hardcoded** (34 kata)
 - `stemming_ecs()` menggunakan library Sastrawi (Bahasa Indonesia) — menggunakan ECS (Enhanced Confix Stripping)
 - Setiap tahap hasilnya disimpan sebagai kolom terpisah di `text_preprocessing` → bisa dilihat di halaman detail
+- **InSet Lexicon menggunakan `case_folded_text`**, bukan `final_text` — sehingga stopword removal tidak mempengaruhi proses labeling
 
 ### 7.4 TF-IDF Conversion (`KonversiRoute.py`)
 
@@ -409,6 +414,9 @@ Jika salah satu kelas sentimen hanya punya 1 data, `train_test_split` dengan `st
 
 ### Issue 5: InSet Lexicon tidak mencakup kata domain politik
 InSet Lexicon adalah kamus umum — kata seperti "makan siang gratis", "kabinet merah putih" tidak ada. Tweet yang hanya membahas topik ini tanpa kata sentimen umum akan berlabel netral. Bisa diatasi dengan tambah kata domain manual ke file CSV leksikon.
+
+### Issue 6: InSet Lexicon tidak memiliki negation handling
+`"tidak bagus"` → InSet hanya mendeteksi `"bagus"` (+3), skor tetap positif karena `"tidak"` bukan entri di leksikon. Frasa negasi tidak dibalik otomatis. Ini adalah keterbatasan inheren metode berbasis lexicon tanpa parser sintaksis. Perlu dicatat sebagai keterbatasan penelitian di BAB IV. Solusi parsial yang sudah diimplementasikan: InSet menggunakan `case_folded_text` (sebelum stopword removal) agar `"tidak"` setidaknya hadir — namun karena `"tidak"` tidak ada di leksikon, dampaknya tetap nol.
 
 ---
 
