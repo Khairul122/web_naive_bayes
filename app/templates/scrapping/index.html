@@ -181,8 +181,12 @@
                                             <a href="{{ url_for('scrapping.export') }}" class="btn btn-primary btn-sm me-2">
                                                 <i class="fas fa-download me-1"></i>Export CSV
                                             </a>
-                                            <form method="POST" action="{{ url_for('scrapping.reset') }}" class="d-inline"
-                                                  onsubmit="return confirm('Yakin ingin menghapus semua data?')">
+                                            <form method="POST" action="{{ url_for('scrapping.reset') }}"
+                                                  class="d-inline"
+                                                  data-confirm="Semua data scrapping tweet akan dihapus permanen!"
+                                                  data-confirm-title="Reset Data Scrapping"
+                                                  data-confirm-type="danger"
+                                                  data-confirm-text="Ya, Hapus Semua">
                                                 <button type="submit" class="btn btn-danger btn-sm">
                                                     <i class="fas fa-trash me-1"></i>Reset All
                                                 </button>

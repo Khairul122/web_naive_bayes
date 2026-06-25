@@ -184,8 +184,12 @@
                                             <i class="fas fa-download me-2"></i>Export Dataset
                                         </a>
                                         
-                                        <form method="POST" action="{{ url_for('sentimen.reset') }}" 
-                                              onsubmit="return confirm('Yakin ingin menghapus semua label sentiment?')" class="d-inline">
+                                        <form method="POST" action="{{ url_for('sentimen.reset') }}"
+                                              class="d-inline"
+                                              data-confirm="Semua label sentimen akan dihapus permanen!"
+                                              data-confirm-title="Reset Label Sentimen"
+                                              data-confirm-type="danger"
+                                              data-confirm-text="Ya, Hapus Semua">
                                             <button type="submit" class="btn btn-outline-danger w-100">
                                                 <i class="fas fa-trash me-2"></i>Reset Labels
                                             </button>
