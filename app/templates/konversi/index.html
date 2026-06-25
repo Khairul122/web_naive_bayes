@@ -250,9 +250,14 @@
                                     </div>
 
                                     {% if conversion_data.pages > 1 %}
-                                    <div class="p-3 border-top bg-light">
+                                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 p-3 border-top bg-light">
+                                        <div class="text-center text-sm-start mb-2 mb-sm-0">
+                                            <small class="text-muted">
+                                                Halaman <strong>{{ conversion_data.page }}</strong> dari <strong>{{ conversion_data.pages }}</strong> ({{ conversion_data.total }} total data)
+                                            </small>
+                                        </div>
                                         <nav>
-                                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                            <ul class="pagination pagination-sm justify-content-center justify-content-sm-end mb-0">
                                                 {% if conversion_data.has_prev %}
                                                     <li class="page-item">
                                                         <a class="page-link" href="{{ url_for('konversi.index', page=conversion_data.prev_num) }}">
@@ -288,13 +293,6 @@
                                                 {% endif %}
                                             </ul>
                                         </nav>
-                                        
-                                        <div class="text-center mt-2">
-                                            <small class="text-muted">
-                                                Halaman {{ conversion_data.page }} dari {{ conversion_data.pages }} 
-                                                ({{ conversion_data.total }} total data)
-                                            </small>
-                                        </div>
                                     </div>
                                     {% endif %}
 

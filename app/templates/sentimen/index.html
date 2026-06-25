@@ -283,9 +283,14 @@
 
                                     <!-- Pagination -->
                                     {% if sentiment_data.pages > 1 %}
-                                    <div class="p-3 border-top bg-light">
+                                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 p-3 border-top bg-light">
+                                        <div class="text-center text-sm-start mb-2 mb-sm-0">
+                                            <small class="text-muted">
+                                                Halaman <strong>{{ sentiment_data.page }}</strong> dari <strong>{{ sentiment_data.pages }}</strong> ({{ sentiment_data.total }} total data)
+                                            </small>
+                                        </div>
                                         <nav>
-                                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                            <ul class="pagination pagination-sm justify-content-center justify-content-sm-end mb-0">
                                                 {% if sentiment_data.has_prev %}
                                                     <li class="page-item">
                                                         <a class="page-link" href="{{ url_for('sentimen.index', page=sentiment_data.prev_num) }}">
@@ -321,13 +326,6 @@
                                                 {% endif %}
                                             </ul>
                                         </nav>
-                                        
-                                        <div class="text-center mt-2">
-                                            <small class="text-muted">
-                                                Halaman {{ sentiment_data.page }} dari {{ sentiment_data.pages }} 
-                                                ({{ sentiment_data.total }} total data)
-                                            </small>
-                                        </div>
                                     </div>
                                     {% endif %}
 

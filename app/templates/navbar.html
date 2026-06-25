@@ -2,20 +2,31 @@
   class="navbar default-layout col-lg-12 col-12 p-0 fixed-top d-flex align-items-top flex-row"
 >
   <div
-    class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-start"
+    class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-between w-100 px-3"
   >
-    <div class="me-3">
-      <button
-        class="navbar-toggler navbar-toggler align-self-center"
-        type="button"
-        data-bs-toggle="minimize"
-      >
-        <span class="icon-menu"></span>
-      </button>
+    <div class="d-flex align-items-center">
+      <div class="me-3 d-none d-lg-block">
+        <button
+          class="navbar-toggler navbar-toggler align-self-center"
+          type="button"
+          data-bs-toggle="minimize"
+        >
+          <span class="icon-menu"></span>
+        </button>
+      </div>
+      <div class="navbar-brand-text d-flex align-items-center">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" />
+        <span>Analisis Sentimen NBC</span>
+      </div>
     </div>
-    <div class="navbar-brand-text d-flex align-items-center">
-      <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" />
-      <span>Analisis Sentimen NBC</span>
-    </div>
+    <button
+      class="navbar-toggler navbar-toggler-right d-lg-none align-self-center border-0 bg-transparent p-0"
+      type="button"
+      data-bs-toggle="offcanvas"
+      aria-label="Toggle navigation"
+    >
+      <span class="icon-menu" style="font-size: 1.25rem;"></span>
+    </button>
   </div>
 </nav>
+

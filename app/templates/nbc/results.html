@@ -191,9 +191,14 @@
                                     </div>
 
                                     {% if testing_results.pages > 1 %}
-                                    <div class="p-3 border-top bg-light">
+                                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 p-3 border-top bg-light">
+                                        <div class="text-center text-sm-start mb-2 mb-sm-0">
+                                            <small class="text-muted">
+                                                Halaman <strong>{{ testing_results.page }}</strong> dari <strong>{{ testing_results.pages }}</strong> ({{ testing_results.total }} total data)
+                                            </small>
+                                        </div>
                                         <nav>
-                                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                            <ul class="pagination pagination-sm justify-content-center justify-content-sm-end mb-0">
                                                 {% if testing_results.has_prev %}
                                                     <li class="page-item">
                                                         <a class="page-link" href="{{ url_for('nbc.results', page=testing_results.prev_num) }}">
@@ -229,13 +234,6 @@
                                                 {% endif %}
                                             </ul>
                                         </nav>
-                                        
-                                        <div class="text-center mt-2">
-                                            <small class="text-muted">
-                                                Halaman {{ testing_results.page }} dari {{ testing_results.pages }} 
-                                                ({{ testing_results.total }} total hasil)
-                                            </small>
-                                        </div>
                                     </div>
                                     {% endif %}
 
@@ -264,7 +262,7 @@
                                 </div>
                                 <div class="card-body">
                                     {% if evaluation_data %}
-                                    <div class="row">
+                                    <div class="row g-4">
                                         <div class="col-md-6">
                                             <h6 class="mb-3">Confusion Matrix</h6>
                                             <div class="text-center">
@@ -476,6 +474,21 @@
 .accordion-button:not(.collapsed) {
     background-color: var(--blue-pale);
     color: var(--blue-deep);
+}
+
+@media (max-width: 767.98px) {
+    #nav-tab {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        padding-bottom: 5px;
+        -webkit-overflow-scrolling: touch;
+        border-bottom: 1px solid var(--blue-pale);
+    }
+    #nav-tab .nav-link {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
+    }
 }
 </style>
 {% endblock %}

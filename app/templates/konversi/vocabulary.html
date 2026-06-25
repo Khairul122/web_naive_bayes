@@ -33,11 +33,11 @@
                         {% endif %}
                     {% endwith %}
 
-                    <div class="row mb-4">
+                    <div class="row mb-4 g-3 align-items-center">
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm">
-                                <div class="card-body text-center">
-                                    <h4 class="mb-1 text-primary">{{ vocab_data.total }}</h4>
+                                <div class="card-body text-center py-3">
+                                    <h4 class="mb-1 text-primary fw-bold">{{ vocab_data.total }}</h4>
                                     <small class="text-muted">Total Vocabulary</small>
                                 </div>
                             </div>
@@ -45,7 +45,7 @@
                         <div class="col-md-6">
                             <form method="GET" action="{{ url_for('konversi.vocabulary') }}">
                                 <div class="input-group">
-                                    <input type="text" name="search" class="form-control" 
+                                    <input type="text" name="search" class="form-control border-2" 
                                            placeholder="Cari kata..." value="{{ search if search }}">
                                     <button class="btn btn-primary" type="submit">
                                         <i class="fas fa-search"></i>
@@ -127,9 +127,14 @@
                             </div>
 
                             {% if vocab_data.pages > 1 %}
-                            <div class="p-3 border-top bg-light">
+                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 p-3 border-top bg-light">
+                                        <div class="text-center text-sm-start mb-2 mb-sm-0">
+                                            <small class="text-muted">
+                                                Halaman <strong>{{ vocab_data.page }}</strong> dari <strong>{{ vocab_data.pages }}</strong> ({{ vocab_data.total }} total data)
+                                            </small>
+                                        </div>
                                 <nav>
-                                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                                    <ul class="pagination pagination-sm justify-content-center justify-content-sm-end mb-0">
                                         {% if vocab_data.has_prev %}
                                             <li class="page-item">
                                                 <a class="page-link" href="{{ url_for('konversi.vocabulary', page=vocab_data.prev_num, search=search) }}">
@@ -165,14 +170,7 @@
                                         {% endif %}
                                     </ul>
                                 </nav>
-                                
-                                <div class="text-center mt-2">
-                                    <small class="text-muted">
-                                        Halaman {{ vocab_data.page }} dari {{ vocab_data.pages }} 
-                                        ({{ vocab_data.total }} total vocabulary)
-                                    </small>
-                                </div>
-                            </div>
+                                    </div>
                             {% endif %}
                         </div>
                     </div>

@@ -402,6 +402,13 @@ document.querySelectorAll('input, select').forEach(function(input) {
     opacity: 0.5;
 }
 
+.stopwords-container,
+.normalization-container {
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--blue-slate) var(--blue-pale);
+}
+
 .stopwords-container::-webkit-scrollbar,
 .normalization-container::-webkit-scrollbar {
     width: 6px;
