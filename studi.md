@@ -129,8 +129,10 @@ Mengganti kata-kata tidak baku Twitter dengan padanan bakunya.
 | KBBI (dictionary_baku_nonbaku.csv) | word, wrong | `cuma → hanya` | `kbbi` |
 | Kamus Alay (kamus_alay.csv) | slang, baku | `gak → tidak`, `bgt → banget` | `alay` |
 
-**Mengapa normalisasi penting sebelum InSet Lexicon:**
-InSet Lexicon memiliki entri "tidak" tetapi tidak memiliki "gak" atau "ngga". Tanpa normalisasi, tweet seperti "gak bagus sama sekali" tidak akan mendeteksi kata sentimen apapun.
+**Mengapa normalisasi penting untuk TF-IDF:**
+TF-IDF menghitung frekuensi kata — jika "gak" dan "tidak" tidak dinormalisasi menjadi satu bentuk baku, keduanya akan dianggap dua fitur berbeda dan vocabulary menjadi berantakan. Normalisasi mengurangi dimensi fitur yang redundan.
+
+> **Catatan desain:** InSet Lexicon dalam sistem ini menganalisis `case_folded_text` (teks sebelum tahap ini), sehingga normalisasi alay tidak berdampak langsung pada proses scoring InSet. Keputusan ini diambil agar kata negasi seperti `"tidak"` tetap hadir di teks yang dianalisis InSet. Normalisasi tetap bermanfaat untuk meningkatkan kualitas representasi TF-IDF di tahap selanjutnya.
 
 **Contoh normalisasi:**
 ```
@@ -655,7 +657,7 @@ F1_pos = 2 × 0.80 × 0.80 / (0.80 + 0.80) = 0.80
 ┌─────────────────────────────────────────────────────────────────┐
 │                     LAPISAN DATA                                │
 │  MySQL 8.0 + SQLAlchemy 2.0                                     │
-│  12 Tabel: users, twitter_scraping, text_preprocessing,         │
+│  13 Tabel: users, twitter_scraping, text_preprocessing,         │
 │  preprocessing_settings, stopword_list, normalization_dict,     │
 │  sentiment_analysis, sentiment_settings, tfidf_conversion,      │
 │  tfidf_vocabulary, nbc_training, nbc_testing, nbc_model         │
@@ -675,7 +677,7 @@ F1_pos = 2 × 0.80 × 0.80 / (0.80 + 0.80) = 0.80
 - **Tabel:** `text_preprocessing` (menyimpan hasil setiap tahap)
 - **7 Tahap:** Cleansing → Case Folding → Tokenizing → Stopword Removal → Normalisasi → Stemming → Filter
 - **Konfigurasi:** Via `preprocessing_settings` dan `normalization_dict` (database-driven)
-- **Output:** `final_text` — teks siap masuk InSet Lexicon dan TF-IDF
+- **Output:** `case_folded_text` — dipakai sebagai input InSet Lexicon (pre-stopword, agar kata negasi tetap ada); `final_text` — dipakai sebagai input TF-IDF (teks bersih 7 tahap penuh)
 
 #### Modul 3: Sentimen
 - **Fungsi:** Memberi label sentimen pada setiap tweet secara otomatis
