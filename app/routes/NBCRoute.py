@@ -1,12 +1,13 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app, send_file
 from app.models.NBCModel import NBCTraining, NBCTesting, NBCModel as NBCModelData
-from app.models.KonversiModel import TfidfConversion
+from app.models.KonversiModel import TfidfConversion, TfidfVocabulary
 from app.models.SentimenModel import SentimentAnalysis
 from app.extension import db
 from datetime import datetime
 import pandas as pd
 import numpy as np
 import json
+import os
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, precision_score, recall_score, f1_score
@@ -813,3 +814,181 @@ def reset():
     
     flash('Semua data NBC berhasil dihapus', 'success')
     return redirect(url_for('nbc.index'))
+
+@nbc_bp.route('/export')
+@login_required
+def export():
+    user_id = session['user_id']
+    
+    model_data = NBCModelData.query.filter_by(user_id=user_id).first()
+    if not model_data:
+        flash('Model NBC belum tersedia. Silakan lakukan training dan testing terlebih dahulu.', 'warning')
+        return redirect(url_for('nbc.index'))
+        
+    try:
+        classes = json.loads(model_data.classes)
+    except Exception as e:
+        logger.error(f"Error parsing classes from model data: {e}")
+        classes = []
+        
+    results = db.session.query(NBCTesting, TfidfConversion, SentimentAnalysis)\
+        .join(TfidfConversion, NBCTesting.conversion_id == TfidfConversion.id)\
+        .join(SentimentAnalysis, TfidfConversion.sentiment_id == SentimentAnalysis.id)\
+        .filter(NBCTesting.user_id == user_id)\
+        .filter(NBCTesting.predicted_label.isnot(None))\
+        .order_by(NBCTesting.created_at.desc())\
+        .all()
+        
+    if not results:
+        flash('Tidak ada hasil testing untuk diexport. Lakukan testing model terlebih dahulu.', 'warning')
+        return redirect(url_for('nbc.results'))
+        
+    data = []
+    for testing, tfidf, sentiment in results:
+        row = {
+            'conversion_id': testing.conversion_id,
+            'tweet_original': sentiment.tweet_text,
+            'tweet_preprocessed': sentiment.processed_text or tfidf.text_input,
+            'true_label': testing.true_label,
+            'predicted_label': testing.predicted_label,
+            'is_correct': 'Benar' if testing.is_correct else 'Salah',
+            'created_at': testing.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        if testing.prediction_probability:
+            try:
+                prob_list = json.loads(testing.prediction_probability)
+                for idx, cls in enumerate(classes):
+                    if idx < len(prob_list):
+                        row[f'prob_{cls}'] = prob_list[idx]
+            except Exception as e:
+                logger.error(f"Error parsing prediction probability for testing {testing.id}: {e}")
+                
+        data.append(row)
+        
+    df = pd.DataFrame(data)
+    
+    dataset_dir = os.path.join(current_app.root_path, 'static', 'dataset')
+    if not os.path.exists(dataset_dir):
+        os.makedirs(dataset_dir)
+        
+    filename = f"nbc_testing_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    export_path = os.path.join(dataset_dir, filename)
+    df.to_csv(export_path, index=False)
+    
+    logger.info(f"Hasil testing NBC diexport oleh user {user_id} ke {export_path}")
+    return send_file(export_path, as_attachment=True, download_name=filename, mimetype='text/csv')
+
+@nbc_bp.route('/export_manual')
+@login_required
+def export_manual():
+    user_id = session['user_id']
+    
+    model_data = NBCModelData.query.filter_by(user_id=user_id).first()
+    if not model_data:
+        flash('Model NBC belum tersedia. Silakan lakukan training dan testing terlebih dahulu.', 'warning')
+        return redirect(url_for('nbc.index'))
+        
+    training_data = NBCTraining.query.filter_by(user_id=user_id).all()
+    testing_data = NBCTesting.query.filter_by(user_id=user_id).all()
+    
+    if not training_data or not testing_data:
+        flash('Data training dan testing diperlukan untuk mengekspor perhitungan manual.', 'warning')
+        return redirect(url_for('nbc.results'))
+        
+    try:
+        vocab = TfidfVocabulary.query.filter_by(user_id=user_id).all()
+        vocab_dict = {v.feature_index: v.term for v in vocab}
+    except Exception as e:
+        logger.error(f"Error loading vocabulary: {e}")
+        vocab_dict = {}
+        
+    try:
+        X_train = []
+        y_train = []
+        for data in training_data:
+            feature_vector = json.loads(data.feature_vector)
+            X_train.append(feature_vector)
+            y_train.append(data.label)
+        
+        X_test = []
+        testing_samples = testing_data[:5]
+        testing_info = db.session.query(NBCTesting, TfidfConversion, SentimentAnalysis)\
+            .join(TfidfConversion, NBCTesting.conversion_id == TfidfConversion.id)\
+            .join(SentimentAnalysis, TfidfConversion.sentiment_id == SentimentAnalysis.id)\
+            .filter(NBCTesting.id.in_([t.id for t in testing_samples]))\
+            .all()
+            
+        info_dict = {info[0].id: (info[1], info[2]) for info in testing_info}
+        
+        for data in testing_samples:
+            feature_vector = json.loads(data.feature_vector)
+            X_test.append(feature_vector)
+        
+        X_train = np.array(X_train)
+        X_test = np.array(X_test)
+        classes = json.loads(model_data.classes)
+        
+        manual_calculations = calculate_manual_naive_bayes(
+            X_train, y_train, X_test, classes, model_data.alpha
+        )
+    except Exception as e:
+        logger.error(f"Error calculating manual naive bayes: {e}")
+        flash('Terjadi kesalahan saat menghitung perhitungan manual.', 'danger')
+        return redirect(url_for('nbc.results'))
+        
+    export_data = []
+    
+    for calc in manual_calculations:
+        test_idx = calc['test_index']
+        testing_record = testing_samples[test_idx]
+        
+        tweet_text = ""
+        preprocessed_text = ""
+        if testing_record.id in info_dict:
+            tfidf_rec, sentiment_rec = info_dict[testing_record.id]
+            tweet_text = sentiment_rec.tweet_text
+            preprocessed_text = sentiment_rec.processed_text or tfidf_rec.text_input
+            
+        predicted_class = calc['predicted_class']
+        
+        for cls in classes:
+            class_calc = calc['class_calculations'][cls]
+            is_predicted = 'Ya' if cls == predicted_class else 'Tidak'
+            
+            contrib_details = []
+            for contrib in class_calc['feature_contributions'][:10]:
+                feat_idx = contrib['feature_index']
+                feat_word = vocab_dict.get(feat_idx, f"Fitur {feat_idx}")
+                val = contrib['feature_value']
+                prob = contrib['feature_probability']
+                log_contrib = contrib['log_contribution']
+                contrib_details.append(f"'{feat_word}' (idx {feat_idx}): val={val:.4f}, P={prob:.6f}, log_P={log_contrib:.6f}")
+                
+            contrib_str = " | ".join(contrib_details)
+            
+            row = {
+                'data_testing_no': test_idx + 1,
+                'tweet_original': tweet_text,
+                'tweet_preprocessed': preprocessed_text,
+                'class_evaluated': cls,
+                'prior_probability': class_calc['prior_probability'],
+                'log_prior': class_calc['log_prior'],
+                'total_log_probability': class_calc['total_log_probability'],
+                'is_predicted_class': is_predicted,
+                'top_feature_contributions': contrib_str
+            }
+            export_data.append(row)
+            
+    df = pd.DataFrame(export_data)
+    
+    dataset_dir = os.path.join(current_app.root_path, 'static', 'dataset')
+    if not os.path.exists(dataset_dir):
+        os.makedirs(dataset_dir)
+        
+    filename = f"nbc_manual_calculations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    export_path = os.path.join(dataset_dir, filename)
+    df.to_csv(export_path, index=False)
+    
+    logger.info(f"Perhitungan manual NBC diexport oleh user {user_id} ke {export_path}")
+    return send_file(export_path, as_attachment=True, download_name=filename, mimetype='text/csv')

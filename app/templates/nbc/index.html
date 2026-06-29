@@ -199,6 +199,9 @@
                                         <a href="{{ url_for('nbc.results') }}" class="btn btn-outline-primary">
                                             <i class="fas fa-chart-bar me-2"></i>Lihat Hasil
                                         </a>
+                                        <a href="{{ url_for('nbc.export') }}" class="btn btn-outline-warning">
+                                            <i class="fas fa-download me-2"></i>Ekspor Hasil (CSV)
+                                        </a>
                                         {% endif %}
                                         
                                         {% if stats.training_count > 0 or stats.testing_count > 0 or stats.model_count > 0 %}
