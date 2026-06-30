@@ -1,8 +1,4 @@
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
-  <div class="sidebar-brand">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" />
-    <span>Analisis<br />Sentimen NBC</span>
-  </div>
   <ul class="nav">
     <li class="nav-item">
       <a class="nav-link {{ 'active' if request.endpoint == 'dashboard.index' else '' }}" href="{{ url_for('dashboard.index') }}">
